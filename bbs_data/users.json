@@ -1,0 +1,17 @@
+[
+    {
+        "username": "guest1",
+        "password": "qwerty",
+        "enabled": true
+    },
+    {
+        "username": "guest2",
+        "password": "12345678",
+        "enabled": false
+    },
+    {
+        "username": "guest3",
+        "password": "password",
+        "enabled": false
+    }
+]

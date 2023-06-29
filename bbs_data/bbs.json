@@ -1,0 +1,26 @@
+[
+    {
+        "name": "Lobby",
+        "posts": []
+    },
+    {
+        "name": "Technika",
+        "posts": [
+            {
+                "title": "Test číslo 1",
+                "contents": "Rokjsbj",
+                "id": 0
+            },
+            {
+                "title": "Test číslo 5874",
+                "contents": "vkhdbjs bk",
+                "id": 1
+            },
+            {
+                "title": "LOLZ",
+                "contents": "No contents",
+                "id": 2
+            }
+        ]
+    }
+]
