@@ -66,7 +66,7 @@ def load_db():
                 "posts": [
                     {"title": "LOLZ",
                     "contents": "No contents",
-                    "id": 2}]}]
+                    "id": 0}]}]
 
     try:
         with open(f"bbs_data{dividor}users.json", "r") as file:
