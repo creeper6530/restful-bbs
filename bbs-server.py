@@ -63,10 +63,7 @@ def load_db():
                 "posts": []},
 
                 {"name": "Technika",
-                "posts": [
-                    {"title": "LOLZ",
-                    "contents": "No contents",
-                    "id": 0}]}]
+                "posts": []}]
 
     try:
         with open(f"bbs_data{dividor}users.json", "r") as file:
@@ -101,15 +98,6 @@ def load_db():
                 {"user": "guest3",
                 "token": "CKJbn897hds=",
                 "valid_until": 1470987405}]
-        
-    print("Checking token DB...")
-    tmp_pair_list = token_pair_list.copy() # Funkce copy() zabraňuje vzniku reference na objekt token_pair_list
-                                           # Tvorba kopie je potřeba, aby for smyčka nic nepřeskočila
-    for token_pair in tmp_pair_list:
-        if token_pair["valid_until"] < int(time()):
-            token_pair_list.remove(token_pair)
-    del tmp_pair_list # Smažeme kopii, abychom ušetřili paměť
-
 load_db()
 
 def save_db():
