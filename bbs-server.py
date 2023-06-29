@@ -153,6 +153,12 @@ def check_token(token: str):
             return True
     return json.dumps({"error": "Token not found. Please relogin."}, ensure_ascii=ensure_ascii), 498, [("Content-Type", "application/json; charset=utf-8")]
 
+def get_user_from_token(token: str):
+    for token_pair in token_pair_list:
+        if token_pair["token"] == token:
+            return token_pair["user"]
+    return False # No matching token found
+
 
 
 
