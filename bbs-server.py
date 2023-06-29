@@ -7,10 +7,9 @@
 # odeslat jen seznam Boardů při GET /boards, odstraňuj to = na konci tokenů, pořeš načítání celé BBS do paměti
 
 
-# TODO: Přidej na GitHub a nauč se s ním pracovat ve VSCode
+# TODO: Pořeš, když je token potřeba, ale není dán (je vhodné použít error kód 499 nebo 401)
 
 
-# Implementuj /reload endpoint, který znovu načte JSON databáze ze souboru, a /save endpoint, který je uloží do souboru, a to vše bez restartu serveru
 # Implementuj do BBSky automatické odstranění propadlých tokenů při načtení tokens.json (nebo to dej do TODO)
 # Šlo by to takto: nejdřív definuj fce login(), logout(),... pak načti soubor a zkontroluj každý token (protože kontrola automaticky zahazuje propadlé tokeny), a vyprintuj průběh "Loading DBs..." "Checking token DB..." atd.
 
@@ -22,6 +21,9 @@
 # curl -i http://127.0.0.1:5000/boards/Technika -X GET
 # curl -i http://127.0.0.1:5000/boards/Technika -X POST -H 'Content-Type: application/json' -d '{"title": "Test", "contents": "Random article", "token":"S4mpl3T0k3n="}'
 # curl -i http://127.0.0.1:5000/boards/Technika -X DELETE -H 'Content-Type: application/json' -d '{"id": 3, "token":"S4mpl3T0k3n="}'
+
+# curl -i http:///127.0.0.1:5000/reload -X POST -H 'Content-Type: application/json' -d '{"token":"S4mpl3T0k3n="}'
+# curl -i http:///127.0.0.1:5000/save -X POST -H 'Content-Type: application/json' -d '{"token":"S4mpl3T0k3n="}'
 
 
 
@@ -43,61 +45,78 @@ elif name == "posix":
     dividor = "/"
 else: raise NotImplementedError
 
-try:
-    with open(f"bbs_data{dividor}bbs.json", "r") as file:
-        board_list = json.load(file)
-
-except FileNotFoundError:
-    board_list = [{"name": "Lobby",
-               "posts": []},
-
-              {"name": "Technika",
-               "posts": []}]
+ensure_ascii = True
 
 
-try:
-    with open(f"bbs_data{dividor}users.json", "r") as file:
-        users_list = json.load(file)
+def load_db():
+    global board_list
+    global users_list
+    global token_pair_list
+    print("Loading DBs...")
 
-except FileNotFoundError:
-    users_list = [{"username": "guest1",
-               "password": "qwerty",
-               "enabled": True},
+    try:
+        with open(f"bbs_data{dividor}bbs.json", "r") as file:
+            board_list = json.load(file)
 
-              {"username": "guest2",
-               "password": "12345678",
-               "enabled": False},
+    except FileNotFoundError:
+        board_list = [{"name": "Lobby",
+                "posts": []},
 
-              {"username": "guest3",
-               "password": "password",
-               "enabled": False}]
+                {"name": "Technika",
+                "posts": []}]
+
+    try:
+        with open(f"bbs_data{dividor}users.json", "r") as file:
+            users_list = json.load(file)
+
+    except FileNotFoundError:
+        users_list = [{"username": "guest1",
+                "password": "qwerty",
+                "enabled": True},
+
+                {"username": "guest2",
+                "password": "12345678",
+                "enabled": False},
+
+                {"username": "guest3",
+                "password": "password",
+                "enabled": False}]
+
+    try:
+        with open(f"bbs_data{dividor}tokens.json", "r") as file:
+            token_pair_list = json.load(file)
+
+    except FileNotFoundError:
+        token_pair_list = [{"user": "guest1",
+                "token": "hcHci68fFJE=",
+                "valid_until": 1470987405}, # Před ~7 lety
+
+                {"user": "guest2",
+                "token": "Pa5oDCzuIFN=",
+                "valid_until": 1470987405},
+
+                {"user": "guest3",
+                "token": "CKJbn897hds=",
+                "valid_until": 1470987405}]
+load_db()
+
+def save_db():
+    print("Saving DBs...")
+    with open(f"bbs_data{dividor}bbs.json", "w") as file:
+        json.dump(board_list, file, indent=4, ensure_ascii=ensure_ascii)
+    with open(f"bbs_data{dividor}users.json", "w") as file:
+        json.dump(users_list, file, indent=4, ensure_ascii=ensure_ascii)
+    with open(f"bbs_data{dividor}tokens.json", "w") as file:
+        json.dump(token_pair_list, file, indent=4, ensure_ascii=ensure_ascii)
 
 
-
-
-try:
-    with open(f"bbs_data{dividor}tokens.json", "r") as file:
-        token_pair_list = json.load(file)
-
-except FileNotFoundError:
-    token_pair_list = [{"user": "guest1",
-               "token": "hcHci68fFJE=",
-               "valid_until": 1470987405}, # Před ~7 lety
-
-              {"user": "guest2",
-               "token": "Pa5oDCzuIFN=",
-               "valid_until": 1470987405},
-
-              {"user": "guest3",
-               "token": "CKJbn897hds=",
-               "valid_until": 1470987405}]
 
 
 def login(usr: str, passwd: str):
     for user in users_list:
         if user["username"] == usr and user["password"] == passwd:
             if not user["enabled"]:
-                return json.dumps({"error": "User is disabled."}, ensure_ascii=False), 401, [("Content-Type", "application/json; charset=utf-8")]
+                return json.dumps({"error": "User is disabled."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
 
             token_length = 64 # v bitech
             new_token = b64encode(urandom(int(token_length/8))) # Pravděpodobnost shody 2**-<token_length>
@@ -106,31 +125,59 @@ def login(usr: str, passwd: str):
             new_token_pair = {"user": usr, "token": new_token.decode(), "valid_until": new_valid_until}
             token_pair_list.append(new_token_pair)
             return new_token
-    return json.dumps({"error": "User credentials are incorrect."}, ensure_ascii=False), 401, [("Content-Type", "application/json; charset=utf-8")]
+    return json.dumps({"error": "User credentials are incorrect."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
 
 def logout(token: str):
     for token_pair in token_pair_list:
         if token_pair["token"] == token:
             token_pair_list.remove(token_pair)
             return True
-    return json.dumps({"error": "Token not found."}, ensure_ascii=False), 498, [("Content-Type", "application/json; charset=utf-8")]
+    return json.dumps({"error": "Token not found."}, ensure_ascii=ensure_ascii), 498, [("Content-Type", "application/json; charset=utf-8")]
 
 def check_token(token: str):
     for token_pair in token_pair_list:
         if token_pair["token"] == token:
             if token_pair["valid_until"] < int(time()):
                 logout(token_pair["token"])
-                return json.dumps({"error": "Token is expired. Please relogin."}, ensure_ascii=False), 440, [("Content-Type", "application/json; charset=utf-8")]
+                return json.dumps({"error": "Token is expired. Please relogin."}, ensure_ascii=ensure_ascii), 440, [("Content-Type", "application/json; charset=utf-8")]
             return True
-    return json.dumps({"error": "Token not found. Please relogin."}, ensure_ascii=False), 498, [("Content-Type", "application/json; charset=utf-8")]
-# Pokud je token požadován, ale není dán, je vhodné použít error kód 499 nebo 401
+    return json.dumps({"error": "Token not found. Please relogin."}, ensure_ascii=ensure_ascii), 498, [("Content-Type", "application/json; charset=utf-8")]
+
+
+
+
+@app.post("/reload")
+def reload_db():
+    if request.is_json:
+        data = request.get_json()
+
+        result = check_token(data["token"])
+        if result != True:
+            return result
+
+        load_db()
+        return "", 204, [("Content-Type", "application/json; charset=utf-8")]
+    return json.dumps({"error": "Request must be JSON."}, ensure_ascii=ensure_ascii), 415, [("Content-Type", "application/json; charset=utf-8")]
+
+@app.post("/save")
+def save_db_api():
+    if request.is_json:
+        data = request.get_json()
+
+        result = check_token(data["token"])
+        if result != True:
+            return result
+
+        save_db()
+        return "", 204, [("Content-Type", "application/json; charset=utf-8")]
+    return json.dumps({"error": "Request must be JSON."}, ensure_ascii=ensure_ascii), 415, [("Content-Type", "application/json; charset=utf-8")]
 
 
 
 
 @app.get("/auth")
 def get_auth():
-    return json.dumps({"error": "Method not allowed."}, ensure_ascii=False), 405, [("Content-Type", "application/json; charset=utf-8")]
+    return json.dumps({"error": "Method not allowed."}, ensure_ascii=ensure_ascii), 405, [("Content-Type", "application/json; charset=utf-8")]
 
 @app.post("/auth")
 def post_auth():
@@ -151,7 +198,7 @@ def post_auth():
                 return "", 204, [("Content-Type", "application/json; charset=utf-8")]
             return result
     
-    return json.dumps({"error": "Request must be JSON."}, ensure_ascii=False), 415, [("Content-Type", "application/json; charset=utf-8")]
+    return json.dumps({"error": "Request must be JSON."}, ensure_ascii=ensure_ascii), 415, [("Content-Type", "application/json; charset=utf-8")]
 
 
 
@@ -162,7 +209,7 @@ def root():
 
 @app.get("/boards")
 def list_boards():
-    return json.dumps(board_list, ensure_ascii=False), 200, [("Content-Type", "application/json; charset=utf-8")]
+    return json.dumps(board_list, ensure_ascii=ensure_ascii), 200, [("Content-Type", "application/json; charset=utf-8")]
 
 @app.post("/boards")
 def add_board():
@@ -179,13 +226,13 @@ def add_board():
 
         for board in board_list:
             if board["name"] == new_board["name"]:
-                return json.dumps({"error": "Board with designed name already exists."}, ensure_ascii=False), 409, [("Content-Type", "application/json; charset=utf-8")]
+                return json.dumps({"error": "Board with designed name already exists."}, ensure_ascii=ensure_ascii), 409, [("Content-Type", "application/json; charset=utf-8")]
 
         new_board["posts"] = []
         board_list.append(new_board)
         return "", 204, [("Content-Type", "application/json; charset=utf-8")]
     
-    return json.dumps({"error": "Request must be JSON."}, ensure_ascii=False), 415, [("Content-Type", "application/json; charset=utf-8")]
+    return json.dumps({"error": "Request must be JSON."}, ensure_ascii=ensure_ascii), 415, [("Content-Type", "application/json; charset=utf-8")]
 
 @app.delete("/boards")
 def delete_board():
@@ -201,16 +248,16 @@ def delete_board():
                 board_list.remove(board)
                 return "", 204, [("Content-Type", "application/json; charset=utf-8")]
             
-        return json.dumps({"error": "Board does not exist."}, ensure_ascii=False), 404, [("Content-Type", "application/json; charset=utf-8")]
-    return json.dumps({"error": "Request must be JSON."}, ensure_ascii=False), 415, [("Content-Type", "application/json; charset=utf-8")]
+        return json.dumps({"error": "Board does not exist."}, ensure_ascii=ensure_ascii), 404, [("Content-Type", "application/json; charset=utf-8")]
+    return json.dumps({"error": "Request must be JSON."}, ensure_ascii=ensure_ascii), 415, [("Content-Type", "application/json; charset=utf-8")]
 
 @app.get("/boards/<board_name>")
 def posts_on_board(board_name):
     for board in board_list:
         if board["name"] == board_name:
-            return json.dumps(board["posts"], ensure_ascii=False), 200, [("Content-Type", "application/json; charset=utf-8")]
+            return json.dumps(board["posts"], ensure_ascii=ensure_ascii), 200, [("Content-Type", "application/json; charset=utf-8")]
         
-    return json.dumps({"error": "Board not found."}, ensure_ascii=False), 404, [("Content-Type", "application/json; charset=utf-8")]
+    return json.dumps({"error": "Board not found."}, ensure_ascii=ensure_ascii), 404, [("Content-Type", "application/json; charset=utf-8")]
 
 @app.post("/boards/<board_name>")
 def add_on_board(board_name):
@@ -242,7 +289,7 @@ def add_on_board(board_name):
                 board["posts"].append(new_post)
                 return "", 204, [("Content-Type", "application/json; charset=utf-8")]
     
-    return json.dumps({"error": "Request must be JSON."}, ensure_ascii=False), 415, [("Content-Type", "application/json; charset=utf-8")]
+    return json.dumps({"error": "Request must be JSON."}, ensure_ascii=ensure_ascii), 415, [("Content-Type", "application/json; charset=utf-8")]
 
 @app.delete("/boards/<board_name>")
 def delete_post(board_name):
@@ -260,10 +307,10 @@ def delete_post(board_name):
                         board["posts"].remove(post)
                         return "", 204, [("Content-Type", "application/json; charset=utf-8")]
                 
-                return json.dumps({"error": "Post with designed ID does not exist in this board."}, ensure_ascii=False), 404, [("Content-Type", "application/json; charset=utf-8")]
+                return json.dumps({"error": "Post with designed ID does not exist in this board."}, ensure_ascii=ensure_ascii), 404, [("Content-Type", "application/json; charset=utf-8")]
             
-        return json.dumps({"error": "Board does not exist."}, ensure_ascii=False), 404, [("Content-Type", "application/json; charset=utf-8")]
-    return json.dumps({"error": "Request must be JSON."}, ensure_ascii=False), 415, [("Content-Type", "application/json; charset=utf-8")]
+        return json.dumps({"error": "Board does not exist."}, ensure_ascii=ensure_ascii), 404, [("Content-Type", "application/json; charset=utf-8")]
+    return json.dumps({"error": "Request must be JSON."}, ensure_ascii=ensure_ascii), 415, [("Content-Type", "application/json; charset=utf-8")]
 
 
 
@@ -284,14 +331,8 @@ def err_500(error):
 
 
 if __name__ == "__main__":
-    app.run(debug=False) # Pokud debug=True, jakékoli změny do JSON databáze
+    app.run(host="0.0.0.0", debug=False) # Pokud debug=True, jakékoli změny do JSON databáze
                          # se zahodí po ukončení nebo reloadu
                          # Jednodušší je spouštět debugování skrze VSCode debugger
 
-print("Saving DBs...")
-with open(f"bbs_data{dividor}bbs.json", "w") as file:
-    json.dump(board_list, file, indent=4, ensure_ascii=False)
-with open(f"bbs_data{dividor}users.json", "w") as file:
-    json.dump(users_list, file, indent=4, ensure_ascii=False)
-with open(f"bbs_data{dividor}tokens.json", "w") as file:
-    json.dump(token_pair_list, file, indent=4, ensure_ascii=False)
+save_db()
