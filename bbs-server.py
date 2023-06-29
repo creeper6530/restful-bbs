@@ -1,14 +1,16 @@
-# TODO: Implementuj oprávnění (zatím lze bez loginu GETovat a s loginem POSTovat i DELETEovat vše)
+# TODO (in this order):
 # Přidej autora ke každému postu
+# Pořeš, když je token potřeba, ale není dán (je vhodné použít error kód 499 nebo 401)
+# Odstraňuj to "=" na konci tokenů
+# Příklady pro login/logout
+# Odeslat jen seznam Boardů při GET /boards
+# Logování akcí i s uživatelem (zjistíš dle tokenu) a IP
 # Přidej register(), underister(), chpasswd() a integruj do endpointu (zatím je to prováděné člověkem)
+# Implementuj oprávnění (zatím lze bez loginu GETovat a s loginem POSTovat i DELETEovat vše)
+# Klient
+# Pořeš načítání celé BBS do paměti (optimalizuj paměť) (možná by to šlo pořešit migrací na SQL)
 
-
-# TODO: Klient, příklady pro login/logout, logování akcí i s uživatelem (zjistíš dle tokenu) a IP,
-# odeslat jen seznam Boardů při GET /boards, odstraňuj to = na konci tokenů, pořeš načítání celé BBS do paměti
-
-
-# TODO: Pořeš, když je token potřeba, ale není dán (je vhodné použít error kód 499 nebo 401)
-
+# Examples:
 
 # curl -i http://127.0.0.1:5000/boards -X GET
 # curl -i http://127.0.0.1:5000/boards -X POST -H 'Content-Type: application/json' -d '{"name":"ShrekIsLove", "token":"S4mpl3T0k3n="}'
