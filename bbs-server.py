@@ -186,6 +186,8 @@ def post_auth():
                 return "", 204, [("Content-Type", "application/json; charset=utf-8")]
             return result
     
+        else: return json.dumps({"error": "Unsupported action."}, ensure_ascii=ensure_ascii), 422, [("Content-Type", "application/json; charset=utf-8")]
+    
     return json.dumps({"error": "Request must be JSON."}, ensure_ascii=ensure_ascii), 415, [("Content-Type", "application/json; charset=utf-8")]
 
 
