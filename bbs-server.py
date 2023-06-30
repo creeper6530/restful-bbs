@@ -1,32 +1,3 @@
-# TODO (in this order):
-# Přesuň TODO do zvláštního souboru, abys nemusel pořád dělat bordel v commitech
-# Pořeš, když je token potřeba, ale není dán (je vhodné použít error kód 499 nebo 401)
-# Odstraňuj to "=" na konci tokenů
-# Zkus programovat z RPi přes SSH, aby jsi mohl využít výhody Linuxu
-# Příklady pro login/logout
-# Odeslat jen seznam Boardů při GET /boards
-# Logování akcí i s uživatelem (zjistíš dle tokenu) a IP
-# Přidej register(), underister(), chpasswd() a integruj do endpointu (zatím je to prováděné člověkem)
-# Implementuj oprávnění (zatím lze bez loginu GETovat a s loginem POSTovat i DELETEovat vše)
-# Klient
-# Pořeš načítání celé BBS do paměti (optimalizuj paměť) (možná by to šlo pořešit migrací na SQL)
-
-# Examples:
-
-# curl -i http://127.0.0.1:5000/boards -X GET
-# curl -i http://127.0.0.1:5000/boards -X POST -H 'Content-Type: application/json' -d '{"name":"ShrekIsLove", "token":"S4mpl3T0k3n="}'
-# curl -i http://127.0.0.1:5000/boards -X DELETE -H 'Content-Type: application/json' -d '{"name":"ShrekIsLove", "token":"S4mpl3T0k3n="}'
-
-# curl -i http://127.0.0.1:5000/boards/Technika -X GET
-# curl -i http://127.0.0.1:5000/boards/Technika -X POST -H 'Content-Type: application/json' -d '{"title": "Test", "contents": "Random article", "token":"S4mpl3T0k3n="}'
-# curl -i http://127.0.0.1:5000/boards/Technika -X DELETE -H 'Content-Type: application/json' -d '{"id": 3, "token":"S4mpl3T0k3n="}'
-
-# curl -i http://127.0.0.1:5000/reload -X POST -H 'Content-Type: application/json' -d '{"token":"S4mpl3T0k3n="}'
-# curl -i http://127.0.0.1:5000/save -X POST -H 'Content-Type: application/json' -d '{"token":"S4mpl3T0k3n="}'
-
-
-
-
 from flask import Flask, request
 import json
 from time import time
