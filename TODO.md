@@ -1,8 +1,8 @@
 # TODOs
 
 - [x] Přesuň TODO do zvláštního souboru, abys nemusel pořád dělat bordel v commitech
-- [ ] Pořeš, když je token potřeba, ale není dán (je vhodné použít error kód 499 nebo 401)
-- [ ] Odstraňuj to "=" na konci tokenů
+- [x] Pořeš, když je token potřeba, ale není dán (je vhodné použít error kód 499 nebo 401)
+- [x] Odstraňuj to "=" na konci tokenů
 - [ ] Zkus programovat z RPi přes SSH, aby jsi mohl využít výhody Linuxu
 - [x] Příklady pro login/logout
 - [ ] Odeslat jen seznam Boardů při GET /boards

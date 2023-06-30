@@ -101,10 +101,10 @@ def login(usr: str, passwd: str):
                 return json.dumps({"error": "User is disabled."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
 
             token_length = 64 # v bitech
-            new_token = b64encode(urandom(int(token_length/8))) # Pravděpodobnost shody 2**-<token_length>
+            new_token = b64encode(urandom(int(token_length/8))).decode().replace("=", "") # Pravděpodobnost shody 2**-<token_length>
             new_valid_until = int(time()) + 1*7*24*60*60 # 1 týden do sekund (platnost 1 týden)
             
-            new_token_pair = {"user": usr, "token": new_token.decode(), "valid_until": new_valid_until}
+            new_token_pair = {"user": usr, "token": new_token, "valid_until": new_valid_until}
             token_pair_list.append(new_token_pair)
             return new_token
     return json.dumps({"error": "User credentials are incorrect."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
@@ -139,7 +139,8 @@ def reload_db():
     if request.is_json:
         data = request.get_json()
 
-        result = check_token(data["token"])
+        try: result = check_token(data["token"])
+        except KeyError: return json.dumps({"error": "Token not provided."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
         if result != True:
             return result
 
@@ -152,7 +153,8 @@ def save_db_api():
     if request.is_json:
         data = request.get_json()
 
-        result = check_token(data["token"])
+        try: result = check_token(data["token"])
+        except KeyError: return json.dumps({"error": "Token not provided."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
         if result != True:
             return result
 
@@ -206,7 +208,8 @@ def add_board():
     if request.is_json:
         new_board = request.get_json()
 
-        result = check_token(new_board["token"])
+        try: result = check_token(new_board["token"])
+        except KeyError: return json.dumps({"error": "Token not provided."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
         if result != True:
             return result
         new_board.pop("token")
@@ -229,7 +232,8 @@ def delete_board():
     if request.is_json:
         board_to_delete = request.get_json()
 
-        result = check_token(board_to_delete["token"])
+        try: result = check_token(board_to_delete["token"])
+        except KeyError: return json.dumps({"error": "Token not provided."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
         if result != True:
             return result
 
@@ -256,7 +260,8 @@ def add_on_board(board_name):
 
         new_post["author"] = get_user_from_token(new_post["token"])
 
-        result = check_token(new_post["token"])
+        try: result = check_token(new_post["token"])
+        except KeyError: return json.dumps({"error": "Token not provided."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
         if result != True:
             return result
         new_post.pop("token")
@@ -288,7 +293,8 @@ def delete_post(board_name):
     if request.is_json:
         post_to_delete = request.get_json()
 
-        result = check_token(post_to_delete["token"])
+        try: result = check_token(post_to_delete["token"])
+        except KeyError: return json.dumps({"error": "Token not provided."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
         if result != True:
             return result
 
