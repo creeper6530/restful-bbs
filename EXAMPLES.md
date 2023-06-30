@@ -17,3 +17,7 @@
 ## Auth
 - `curl -i http://127.0.0.1:5000/auth -X POST -H 'Content-Type: application/json' -d '{"action":"login", "username":"guest1", "password":"qwerty"}'`
 - `curl -i http://127.0.0.1:5000/auth -X POST -H 'Content-Type: application/json' -d '{"action":"logout", "token":"<add_token_here>"}'` Insertion of a token is required.
+<br><br>
+- `curl -i http://127.0.0.1:5000/auth -X POST -H 'Content-Type: application/json' -d '{"action":"register", "username":"test", "password":"somepasswd"}'`
+- `curl -i http://127.0.0.1:5000/auth -X POST -H 'Content-Type: application/json' -d '{"action":"change_password", "username":"test", "old_password":"somepasswd", "new_password":"anotherpasswd"}'`
+- `curl -i http://127.0.0.1:5000/auth -X POST -H 'Content-Type: application/json' -d '{"action":"unregister", "username":"test", "password":"anotherpasswd"}'`
