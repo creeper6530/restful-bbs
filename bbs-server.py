@@ -129,7 +129,7 @@ def register(usr: str, passwd: str):
 def unregister(usr: str, passwd: str):
     for user in users_list:
         if user["username"] == usr and user["password"] == passwd:
-            users_list.remove({"username": usr, "password": passwd})
+            users_list.remove(user)
             return True
     return json.dumps({"error": "User with designed credentials not found."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
 
