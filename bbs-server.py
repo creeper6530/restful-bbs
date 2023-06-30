@@ -117,6 +117,22 @@ def logout(token: str):
             return True
     return json.dumps({"error": "Token not found."}, ensure_ascii=ensure_ascii), 498, [("Content-Type", "application/json; charset=utf-8")]
 
+def register(usr: str, passwd: str):
+    for user in users_list:
+        if user["username"] == usr:
+            return json.dumps({"error": "User with designed username already exists."}, ensure_ascii=ensure_ascii), 409, [("Content-Type", "application/json; charset=utf-8")]
+    
+    new_user = {"username": usr, "password": passwd, "enabled": True}
+    users_list.append(new_user)
+    return True
+
+def unregister(usr: str, passwd: str):
+    for user in users_list:
+        if user["username"] == usr and user["password"] == passwd:
+            users_list.remove({"username": usr, "password": passwd})
+            return True
+    return json.dumps({"error": "User with designed credentials not found."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
+
 def check_token(token: str):
     for token_pair in token_pair_list:
         if token_pair["token"] == token:
