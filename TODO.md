@@ -11,3 +11,4 @@
 - [ ] Implementuj oprávnění (zatím lze bez loginu GETovat a s loginem POSTovat i DELETEovat vše)
 - [ ] Klient
 - [ ] Pořeš načítání celé BBS do paměti (optimalizuj paměť) (možná by to šlo pořešit migrací na SQL)
+- [ ] Sepiš dokumentaci
