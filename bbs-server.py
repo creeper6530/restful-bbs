@@ -1,6 +1,5 @@
 # TODO (in this order):
 # Přesuň TODO do zvláštního souboru, abys nemusel pořád dělat bordel v commitech
-# Přidej autora ke každému postu
 # Pořeš, když je token potřeba, ale není dán (je vhodné použít error kód 499 nebo 401)
 # Odstraňuj to "=" na konci tokenů
 # Zkus programovat z RPi přes SSH, aby jsi mohl využít výhody Linuxu
