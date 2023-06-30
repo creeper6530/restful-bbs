@@ -133,6 +133,13 @@ def unregister(usr: str, passwd: str):
             return True
     return json.dumps({"error": "User with designed credentials not found."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
 
+def chpasswd(usr: str, old_passwd:str, new_passwd: str):
+    for user in users_list:
+        if user["username"] == usr and user["password"] == old_passwd:
+            user["password"] = new_passwd
+            return True
+    return json.dumps({"error": "User with designed credentials not found."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
+
 def check_token(token: str):
     for token_pair in token_pair_list:
         if token_pair["token"] == token:
@@ -201,6 +208,24 @@ def post_auth():
         
         elif action == "logout":
             result = logout(data["token"])
+            if result == True:
+                return "", 204, [("Content-Type", "application/json; charset=utf-8")]
+            return result
+        
+        elif action == "register":
+            result = register(data["username"], data["password"])
+            if result == True:
+                return "", 204, [("Content-Type", "application/json; charset=utf-8")]
+            return result
+        
+        elif action == "unregister":
+            result = unregister(data["username"], data["password"])
+            if result == True:
+                return "", 204, [("Content-Type", "application/json; charset=utf-8")]
+            return result
+        
+        elif action == "change_password":
+            result = chpasswd(data["username"], data["old_password"], data["new_password"])
             if result == True:
                 return "", 204, [("Content-Type", "application/json; charset=utf-8")]
             return result
