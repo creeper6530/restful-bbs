@@ -9,16 +9,19 @@
             {
                 "title": "Test cislo 1",
                 "contents": "Rokjsbj",
+                "author": "Administrator",
                 "id": 0
             },
             {
                 "title": "Test cislo 5874",
                 "contents": "vkhdbjs bk",
+                "author": "Administrator",
                 "id": 1
             },
             {
                 "title": "LOLZ",
                 "contents": "No contents",
+                "author": "Administrator",
                 "id": 2
             }
         ]

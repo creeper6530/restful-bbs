@@ -22,8 +22,8 @@
 # curl -i http://127.0.0.1:5000/boards/Technika -X POST -H 'Content-Type: application/json' -d '{"title": "Test", "contents": "Random article", "token":"S4mpl3T0k3n="}'
 # curl -i http://127.0.0.1:5000/boards/Technika -X DELETE -H 'Content-Type: application/json' -d '{"id": 3, "token":"S4mpl3T0k3n="}'
 
-# curl -i http:///127.0.0.1:5000/reload -X POST -H 'Content-Type: application/json' -d '{"token":"S4mpl3T0k3n="}'
-# curl -i http:///127.0.0.1:5000/save -X POST -H 'Content-Type: application/json' -d '{"token":"S4mpl3T0k3n="}'
+# curl -i http://127.0.0.1:5000/reload -X POST -H 'Content-Type: application/json' -d '{"token":"S4mpl3T0k3n="}'
+# curl -i http://127.0.0.1:5000/save -X POST -H 'Content-Type: application/json' -d '{"token":"S4mpl3T0k3n="}'
 
 
 
@@ -281,6 +281,8 @@ def posts_on_board(board_name):
 def add_on_board(board_name):
     if request.is_json:
         new_post = request.get_json()
+
+        new_post["author"] = get_user_from_token(new_post["token"])
 
         result = check_token(new_post["token"])
         if result != True:
