@@ -3,6 +3,7 @@ import json
 from time import time
 from os import urandom, name
 from base64 import b64encode
+from copy import deepcopy
 
 
 
@@ -201,7 +202,11 @@ def root():
 
 @app.get("/boards")
 def list_boards():
-    return json.dumps(board_list, ensure_ascii=ensure_ascii), 200, [("Content-Type", "application/json; charset=utf-8")]
+    postless_board_list = deepcopy(board_list)
+    for board in postless_board_list:
+        board["posts"] = len(board["posts"])
+
+    return json.dumps(postless_board_list, ensure_ascii=ensure_ascii), 200, [("Content-Type", "application/json; charset=utf-8")]
 
 @app.post("/boards")
 def add_board():
