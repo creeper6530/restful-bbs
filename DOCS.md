@@ -7,24 +7,12 @@ List, add or delete boards
 `GET /boards`
 ### Responses
 <table>
-<tr>
-<td> Status </td> <td> Response </td>
-</tr>
-
-
-<tr>
-<td>
-
-200 OK
-
-</td>
+<tr><td><b> Status </td><td><b> Response </td></tr>
+<tr><td> 200 OK </td>
 <td>
 
 Returns a list of boards with name and number of posts on board.
 <br>Example response:
-```
-GET /boards
-```
 ```json
 [
   {
@@ -38,8 +26,7 @@ GET /boards
 ]
 ```
 
-</td>
-</table>
+</td></table>
 
 ### Example
 `curl -i http://127.0.0.1:5000/boards -X GET`
@@ -47,6 +34,22 @@ GET /boards
 ## Add a board
 ### Endpoint
 `POST /boards`
+### Parameters
+<table>
+<tr><td><b> Parameter </td><td><b> Description </td></tr>
+<tr><td> body </td>
+<td>
+
+```json
+{
+  "name": "string",
+  "token": "string"
+}
+```
+
+</td>
+</table>
+
 ### Responses
 | Status | Response |
 |---|---|
@@ -59,6 +62,22 @@ GET /boards
 ## Delete a board
 ### Endpoint
 `DELETE /boards`
+### Parameters
+<table>
+<tr><td><b> Parameter </td><td><b> Description </td></tr>
+<tr><td> body </td>
+<td>
+
+```json
+{
+  "name": "string",
+  "token": "string"
+}
+```
+
+</td>
+</table>
+
 ### Responses
 | Status | Response |
 |----|----|
@@ -83,16 +102,8 @@ Get posts from board, add or delete posts on board.
 | board | Name of board to operate with |
 ### Responses
 <table>
-<tr>
-<td> Status </td> <td> Response </td>
-</tr>
-<tr>
-<td>
-
-200 OK
-
-</td>
-<td>
+<tr><td><b> Status </td><td><b> Response </td></tr>
+<tr><td> 200 OK </td><td>
 
 Returns a list of posts on a board with title, contents, author and ID of post.
 <br>Example response:
@@ -119,20 +130,9 @@ Returns a list of posts on a board with title, contents, author and ID of post.
 ]
 ```
 
-</td>
-</tr>
-<tr>
-<td>
-
-404 NOT FOUND
-
-</td>
-<td>
-
-Board with designed name does not exist.
-
-</td>
-</tr>
+</td></tr>
+<tr><td> 404 NOT FOUND </td>
+<td> Board with designed name does not exist. </td></tr>
 </table>
 
 ### Example
@@ -142,9 +142,23 @@ Board with designed name does not exist.
 ### Endpoint
 `POST /boards/<board>`
 ### Parameters
-| Parameter | Description |
-| --- | --- |
-| board | Name of board to operate with |
+<table>
+<tr><td><b> Parameter </td><td><b> Description </td></tr>
+<tr><td> board </td><td> Name of board to operate with </td></tr>
+<tr><td> body </td>
+<td>
+
+```json
+{
+  "title": "string",
+  "contents": "string",
+  "token": "string"
+}
+```
+
+</td>
+</table>
+
 ### Responses
 | Status | Response |
 |---|---|
@@ -157,9 +171,22 @@ Board with designed name does not exist.
 ### Endpoint
 `DELETE /boards/<board>`
 ### Parameters
-| Parameter | Description |
-| --- | --- |
-| board | Name of board to operate with |
+<table>
+<tr><td><b> Parameter </td><td><b> Description </td></tr>
+<tr><td> board </td><td> Name of board to operate with </td></tr>
+<tr><td> body </td>
+<td>
+
+```json
+{
+  "id": 0,
+  "token": "string"
+}
+```
+
+</td>
+</table>
+
 ### Responses
 | Status | Response |
 |---|---|
@@ -176,6 +203,21 @@ Board with designed name does not exist.
 ## Reload DBs from files
 ### Endpoint
 `POST /reload`
+### Parameters
+<table>
+<tr><td><b> Parameter </td><td><b> Description </td></tr>
+<tr><td> body </td>
+<td>
+
+```json
+{
+  "token": "string"
+}
+```
+
+</td>
+</table>
+
 ### Responses
 | Status | Response |
 | --- | --- |
@@ -186,6 +228,21 @@ Board with designed name does not exist.
 ## Save DBs to files
 ### Endpoint
 `POST /save`
+### Parameters
+<table>
+<tr><td><b> Parameter </td><td><b> Description </td></tr>
+<tr><td> body </td>
+<td>
+
+```json
+{
+  "token": "string"
+}
+```
+
+</td>
+</table>
+
 ### Responses
 | Status | Response |
 | --- | --- |
@@ -201,17 +258,26 @@ Board with designed name does not exist.
 ## Login
 ### Endpoint
 `POST /auth/login`
-### Responses 
+### Parameters
 <table>
-<tr>
-<td> Status </td> <td> Response </td>
-</tr>
-<tr>
+<tr><td><b> Parameter </td><td><b> Description </td></tr>
+<tr><td> body </td>
 <td>
 
-200 OK
+```json
+{
+  "username": "string",
+  "password": "string"
+}
+```
 
 </td>
+</table>
+
+### Responses 
+<table>
+<tr><td><b> Status </td><td><b> Response </td></tr>
+<tr><td> 200 OK </td>
 <td>
 
 Returns a token for the user to use.
@@ -222,20 +288,9 @@ Returns a token for the user to use.
 }
 ```
 
-</td>
-</tr>
-<tr>
-<td>
-
-401 UNAUTHORIZED
-
-</td>
-<td>
-
-Designed user credentials either do not exist or are disabled.
-
-</td>
-</tr>
+</td></tr>
+<tr><td> 401 UNAUTHORIZED </td>
+<td> Designed user credentials either do not exist or are disabled. </td></tr>
 </table>
 
 ### Example
@@ -244,6 +299,21 @@ Designed user credentials either do not exist or are disabled.
 ## Logout
 ### Endpoint
 `POST /auth/logout`
+### Parameters
+<table>
+<tr><td><b> Parameter </td><td><b> Description </td></tr>
+<tr><td> body </td>
+<td>
+
+```json
+{
+  "token": "string"
+}
+```
+
+</td>
+</table>
+
 ### Responses
 | Status | Description |
 | --- | --- |
@@ -255,6 +325,22 @@ Designed user credentials either do not exist or are disabled.
 ## Register
 ### Endpoint
 `POST /auth/register`
+### Parameters
+<table>
+<tr><td><b> Parameter </td><td><b> Description </td></tr>
+<tr><td> body </td>
+<td>
+
+```json
+{
+  "username": "string",
+  "password": "string"
+}
+```
+
+</td>
+</table>
+
 ### Responses
 | Status | Description |
 | --- | --- |
@@ -266,6 +352,23 @@ Designed user credentials either do not exist or are disabled.
 ## Change password
 ### Endpoint
 `POST /auth/chpasswd`
+### Parameters
+<table>
+<tr><td><b> Parameter </td><td><b> Description </td></tr>
+<tr><td> body </td>
+<td>
+
+```json
+{
+  "username": "string",
+  "old_password": "string",
+  "new_password": "string"
+}
+```
+
+</td>
+</table>
+
 ### Responses
 | Status | Description |
 | --- | --- |
@@ -277,6 +380,22 @@ Designed user credentials either do not exist or are disabled.
 ## Unregister
 ### Endpoint
 `POST /auth/unregister`
+### Parameters
+<table>
+<tr><td><b> Parameter </td><td><b> Description </td></tr>
+<tr><td> body </td>
+<td>
+
+```json
+{
+  "username": "string",
+  "password": "string"
+}
+```
+
+</td>
+</table>
+
 ### Responses
 | Status | Description |
 | --- | --- |
@@ -299,8 +418,7 @@ The following error descriptions supplement the errors in specific cases.
 | 405 METHOD NOT ALLOWED | HTTP method requested is not permitted at designed endpoint. |
 | 500 INTERNAL SERVER ERROR | Error occured in the server code. Please notify the administrator in case this happens. |
 
-## Except GET and auth
-These errors do not occur in the GET method nor in authorization.
+## Does not apply to GET method and auth
 | Status | Description |
 | --- | --- |
 | 401 UNAUTHORIZED | Authorization token was not provided. |
