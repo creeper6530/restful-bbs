@@ -189,15 +189,14 @@ def save_db_api():
 
 
 
-@app.get("/auth")
+@app.route("/auth", methods=["GET", "POST"])
 def get_auth():
-    return json.dumps({"error": "Method not allowed."}, ensure_ascii=ensure_ascii), 405, [("Content-Type", "application/json; charset=utf-8")]
+    return json.dumps({"error": "Endpoint has been obsoleted. Please use /auth/<action>."}, ensure_ascii=ensure_ascii), 410, [("Content-Type", "application/json; charset=utf-8")]
 
-@app.post("/auth")
-def post_auth():
+@app.post("/auth/<action>")
+def post_auth(action):
     if request.is_json:
         data = request.get_json()
-        action = data["action"]
         
         if action == "login":
             result = login(data["username"], data["password"])
@@ -224,7 +223,7 @@ def post_auth():
                 return "", 204, [("Content-Type", "application/json; charset=utf-8")]
             return result
         
-        elif action == "change_password":
+        elif action == "chpasswd":
             result = chpasswd(data["username"], data["old_password"], data["new_password"])
             if result == True:
                 return "", 204, [("Content-Type", "application/json; charset=utf-8")]
@@ -366,6 +365,10 @@ def err_400(error):
 @app.errorhandler(404)
 def err_404(error):
     return json.dumps({"error": "Requested endpoint can't be found."}), 404, [("Content-Type", "application/json; charset=utf-8")]
+
+@app.errorhandler(405)
+def err_405(error):
+    return json.dumps({"error": "Method not allowed."}, ensure_ascii=ensure_ascii), 405, [("Content-Type", "application/json; charset=utf-8")]
 
 @app.errorhandler(500)
 def err_500(error):
