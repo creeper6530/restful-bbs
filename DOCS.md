@@ -96,9 +96,6 @@ Get posts from board, add or delete posts on board.
 
 Returns a list of posts on a board with title, contents, author and ID of post.
 <br>Example response:
-```
-GET /boards/Technika
-```
 ```json
 [
     {
@@ -123,6 +120,7 @@ GET /boards/Technika
 ```
 
 </td>
+</tr>
 <tr>
 <td>
 
@@ -173,6 +171,123 @@ Board with designed name does not exist.
 
 <hr>
 
+# DB control
+
+## Reload DBs from files
+### Endpoint
+`POST /reload`
+### Responses
+| Status | Response |
+| --- | --- |
+| 204 NO CONTENT | DBs were successfully reloaded. |
+### Example
+`curl -i http://127.0.0.1:5000/reload -X POST -H 'Content-Type: application/json' -d '{"token":"S4mpl3T0k3n"}'`
+
+## Save DBs to files
+### Endpoint
+`POST /save`
+### Responses
+| Status | Response |
+| --- | --- |
+| 204 NO CONTENT | DBs were successfully reloaded. |
+### Example
+`curl -i http://127.0.0.1:5000/save -X POST -H 'Content-Type: application/json' -d '{"token":"S4mpl3T0k3n"}'`
+
+
+<hr>
+
+# Authorization
+
+## Login
+### Endpoint
+`POST /auth/login`
+### Responses 
+<table>
+<tr>
+<td> Status </td> <td> Response </td>
+</tr>
+<tr>
+<td>
+
+200 OK
+
+</td>
+<td>
+
+Returns a token for the user to use.
+<br>Example response:
+```json
+{
+    "token": "aXQD7WHV3wI"
+}
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+401 UNAUTHORIZED
+
+</td>
+<td>
+
+Designed user credentials either do not exist or are disabled.
+
+</td>
+</tr>
+</table>
+
+### Example
+`curl -i http://127.0.0.1:5000/auth/login -X POST -H 'Content-Type: application/json' -d '{"username":"guest1", "password":"qwerty"}'`
+
+## Logout
+### Endpoint
+`POST /auth/logout`
+### Responses
+| Status | Description |
+| --- | --- |
+| 204 NO CONTENT | Successfully logged user out. No additional action needed. |
+| 498 INVALID TOKEN (unofficial) | Token provided does not exist. There is nothing to log out. |
+### Example
+`curl -i http://127.0.0.1:5000/auth/logout -X POST -H 'Content-Type: application/json' -d '{"token":"<add_token_here>"}'` Insertion of a token is required.
+
+## Register
+### Endpoint
+`POST /auth/register`
+### Responses
+| Status | Description |
+| --- | --- |
+| 204 NO CONTENT | Successfully registered user. You can now log in. |
+| 409 CONFLICT | User with designed username already exists. |
+### Example
+`curl -i http://127.0.0.1:5000/auth/register -X POST -H 'Content-Type: application/json' -d '{"username":"test", "password":"somepasswd"}'`
+
+## Change password
+### Endpoint
+`POST /auth/chpasswd`
+### Responses
+| Status | Description |
+| --- | --- |
+| 204 NO CONTENT | Successfully changed password. No additional action needed. |
+| 401 UNAUTHORIZED | Designed user credentials do not exist. |
+### Example
+`curl -i http://127.0.0.1:5000/auth/chpasswd -X POST -H 'Content-Type: application/json' -d '{"username":"test", "old_password":"somepasswd", "new_password":"anotherpasswd"}'`
+
+## Unregister
+### Endpoint
+`POST /auth/unregister`
+### Responses
+| Status | Description |
+| --- | --- |
+| 204 NO CONTENT | Successfully changed password. No additional action needed. |
+| 401 UNAUTHORIZED | Designed user credentials do not exist. |
+### Example
+`curl -i http://127.0.0.1:5000/auth/unregister -X POST -H 'Content-Type: application/json' -d '{"username":"test", "password":"anotherpasswd"}'`
+
+<hr>
+
+
 # General errors
 The following error descriptions supplement the errors in specific cases.
 
@@ -184,8 +299,8 @@ The following error descriptions supplement the errors in specific cases.
 | 405 METHOD NOT ALLOWED | HTTP method requested is not permitted at designed endpoint. |
 | 500 INTERNAL SERVER ERROR | Error occured in the server code. Please notify the administrator in case this happens. |
 
-## Except GET method
-These errors do not occur in the GET method.
+## Except GET and auth
+These errors do not occur in the GET method nor in authorization.
 | Status | Description |
 | --- | --- |
 | 401 UNAUTHORIZED | Authorization token was not provided. |
