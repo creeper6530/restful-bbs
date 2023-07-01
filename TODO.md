@@ -7,7 +7,7 @@
 - [x] Příklady pro login/logout
 - [x] ~~Odeslat jen seznam Boardů při `GET /boards`~~ Odeslat počet příspěvků na boardu při `GET /boards` místo jejich listu
 - [x] Přidej `register()`, `underister()`, `chpasswd()` a integruj do endpointu (zatím je to prováděné člověkem)
-- [ ] Rozděl `/auth` endpoint na jednotlivé `/auth/<action>`
+- [x] Rozděl `/auth` endpoint na jednotlivé `/auth/<action>`
 - [ ] Sepiš dokumentaci
 - [ ] Logování akcí i s uživatelem (zjistíš dle tokenu) a IP
 - [ ] Implementuj oprávnění (zatím lze bez loginu GETovat a s loginem POSTovat i DELETEovat vše)
