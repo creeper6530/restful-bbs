@@ -189,7 +189,7 @@ def save_db_api():
 
 
 
-@app.route("/auth", methods=["GET", "POST"])
+@app.route("/auth", methods=["POST"])
 def get_auth():
     return json.dumps({"error": "Endpoint has been obsoleted. Please use /auth/<action>."}, ensure_ascii=ensure_ascii), 410, [("Content-Type", "application/json; charset=utf-8")]
 
