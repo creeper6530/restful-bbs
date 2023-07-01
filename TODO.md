@@ -5,10 +5,11 @@
 - [x] Odstraňuj to "=" na konci tokenů
 - [x] Zkus programovat z RPi přes SSH, aby jsi mohl využít výhody Linuxu
 - [x] Příklady pro login/logout
-- [x] ~~Odeslat jen seznam Boardů při GET /boards~~ Odeslat počet příspěvků na boardu při GET /boards místo jejich listu
+- [x] ~~Odeslat jen seznam Boardů při `GET /boards`~~ Odeslat počet příspěvků na boardu při `GET /boards` místo jejich listu
+- [x] Přidej `register()`, `underister()`, `chpasswd()` a integruj do endpointu (zatím je to prováděné člověkem)
+- [ ] Rozděl `/auth` endpoint na jednotlivé `/auth/<action>`
+- [ ] Sepiš dokumentaci
 - [ ] Logování akcí i s uživatelem (zjistíš dle tokenu) a IP
-- [x] Přidej register(), underister(), chpasswd() a integruj do endpointu (zatím je to prováděné člověkem)
 - [ ] Implementuj oprávnění (zatím lze bez loginu GETovat a s loginem POSTovat i DELETEovat vše)
 - [ ] Klient
 - [ ] Pořeš načítání celé BBS do paměti (optimalizuj paměť) (možná by to šlo pořešit migrací na SQL)
-- [ ] Sepiš dokumentaci
