@@ -53,7 +53,6 @@ GET /boards
 | 204 NO CONTENT | Successfully added board. No additional action needed. |
 | 400 BAD REQUEST | Board name contains invalid characters. |
 | 409 CONFLICT | Board with designed name already exists. |
-
 ### Example
 `curl -i http://127.0.0.1:5000/boards -X POST -H 'Content-Type: application/json' -d '{"name":"ShrekIsLove", "token":"S4mpl3T0k3n"}'`
 
@@ -65,7 +64,11 @@ GET /boards
 |----|----|
 | 204 NO CONTENT | Successfully deleted board. No additional action needed. |
 | 404 NOT FOUND | Board with designed name does not exists. |
+### Example
+`curl -i http://127.0.0.1:5000/boards -X DELETE -H 'Content-Type: application/json' -d '{"name":"ShrekIsLove", "token":"S4mpl3T0k3n"}'`
 
+
+<hr>
 
 # Post management
 Get posts from board, add or delete posts on board.
@@ -168,8 +171,11 @@ Board with designed name does not exist.
 `curl -i http://127.0.0.1:5000/boards/Technika -X DELETE -H 'Content-Type: application/json' -d '{"id": 3, "token":"S4mpl3T0k3n"}'`
 
 
+<hr>
+
 # General errors
 The following error descriptions supplement the errors in specific cases.
+
 ## All-time general
 | Status | Description |
 | --- | --- |
