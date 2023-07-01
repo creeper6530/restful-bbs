@@ -316,7 +316,7 @@ def add_on_board(board_name):
             if board["name"] == board_name:
 
                 try:
-                    if new_post["title"]== "":
+                    if new_post["title"]== "": # Pokud je titulek prázdný string nebo chybí
                         raise KeyError
                 except KeyError:
                     new_post["title"] = "Untitled post"
@@ -330,7 +330,7 @@ def add_on_board(board_name):
                 new_post["id"] = len(board["posts"])
                 board["posts"].append(new_post)
                 return "", 204, [("Content-Type", "application/json; charset=utf-8")]
-    
+        return json.dumps({"error": "Board does not exist."}, ensure_ascii=ensure_ascii), 404, [("Content-Type", "application/json; charset=utf-8")]    
     return json.dumps({"error": "Request must be JSON."}, ensure_ascii=ensure_ascii), 415, [("Content-Type", "application/json; charset=utf-8")]
 
 @app.delete("/boards/<board_name>")

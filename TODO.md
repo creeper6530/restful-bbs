@@ -9,6 +9,7 @@
 - [x] Přidej `register()`, `underister()`, `chpasswd()` a integruj do endpointu (zatím je to prováděné člověkem)
 - [x] Rozděl `/auth` endpoint na jednotlivé `/auth/<action>`
 - [ ] Sepiš dokumentaci
+- [ ] Pořeš, když chybí i jiná políčka než token
 - [ ] Logování akcí i s uživatelem (zjistíš dle tokenu) a IP
 - [ ] Implementuj oprávnění (zatím lze bez loginu GETovat a s loginem POSTovat i DELETEovat vše)
 - [ ] Klient
