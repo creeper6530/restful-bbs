@@ -4,29 +4,47 @@ from time import time
 from os import urandom, name
 from base64 import b64encode
 from copy import deepcopy
+import logging
+from gzip import open as gzopen
+from shutil import copyfileobj
 
 
 
+
+if name == "nt":
+    divider = "\\"
+elif name == "posix":
+    divider = "/"
+else: raise NotImplementedError
+
+try:
+    with open(f"logs{divider}lastest.log", "r") as old_log:
+        datetime = old_log.read(19)
+    datetime = datetime.replace(" ", "_")
+    datetime = datetime.replace(".", "_")
+    datetime = datetime.replace(":", "_")
+
+        
+    with open(f"logs{divider}lastest.log", "rb") as f_in:
+        with gzopen(f"logs{divider}{datetime}.log.gz", "wb") as f_out:
+            copyfileobj(f_in, f_out)
+except FileNotFoundError: pass
+
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%d.%m.%Y %H:%M:%S', filename=f"logs{divider}lastest.log", filemode="w")
+logging.info("Starting up...")
 
 app = Flask(__name__)
 
-if name == "nt":
-    dividor = "\\"
-elif name == "posix":
-    dividor = "/"
-else: raise NotImplementedError
-
 ensure_ascii = True
 
-
 def load_db():
+    logging.info("Loading DBs...")
     global board_list
     global users_list
     global token_pair_list
-    print("Loading DBs...")
-
+    
     try:
-        with open(f"bbs_data{dividor}bbs.json", "r") as file:
+        with open(f"bbs_data{divider}bbs.json", "r") as file:
             board_list = json.load(file)
 
     except FileNotFoundError:
@@ -40,7 +58,7 @@ def load_db():
                     "id": 0}]}]
 
     try:
-        with open(f"bbs_data{dividor}users.json", "r") as file:
+        with open(f"bbs_data{divider}users.json", "r") as file:
             users_list = json.load(file)
 
     except FileNotFoundError:
@@ -57,7 +75,7 @@ def load_db():
                 "enabled": False}]
 
     try:
-        with open(f"bbs_data{dividor}tokens.json", "r") as file:
+        with open(f"bbs_data{divider}tokens.json", "r") as file:
             token_pair_list = json.load(file)
 
     except FileNotFoundError:
@@ -73,7 +91,7 @@ def load_db():
                 "token": "CKJbn897hds=",
                 "valid_until": 1470987405}]
         
-    print("Checking token DB...")
+    logging.info("Checking token DB...")
     tmp_pair_list = token_pair_list.copy() # Funkce copy() zabraňuje vzniku reference na objekt token_pair_list
                                            # Tvorba kopie je potřeba, aby for smyčka nic nepřeskočila
     for token_pair in tmp_pair_list:
@@ -84,12 +102,12 @@ def load_db():
 load_db()
 
 def save_db():
-    print("Saving DBs...")
-    with open(f"bbs_data{dividor}bbs.json", "w") as file:
+    logging.info("Saving DBs...")
+    with open(f"bbs_data{divider}bbs.json", "w") as file:
         json.dump(board_list, file, indent=4, ensure_ascii=ensure_ascii)
-    with open(f"bbs_data{dividor}users.json", "w") as file:
+    with open(f"bbs_data{divider}users.json", "w") as file:
         json.dump(users_list, file, indent=4, ensure_ascii=ensure_ascii)
-    with open(f"bbs_data{dividor}tokens.json", "w") as file:
+    with open(f"bbs_data{divider}tokens.json", "w") as file:
         json.dump(token_pair_list, file, indent=4, ensure_ascii=ensure_ascii)
 
 
@@ -253,6 +271,7 @@ def post_auth(action):
 
 @app.get("/")
 def root():
+    raise Exception # Temporary, used to test exception logging
     return "This server is currently to be accesed only via the API.", 501 # Todo: odeslat klientský program
 
 @app.get("/boards")
@@ -389,6 +408,7 @@ def err_405(error):
 
 @app.errorhandler(500)
 def err_500(error):
+    logging.exception("Internal server error")
     return json.dumps({"error": "Internal server error. Please notify the administrator."}, ensure_ascii=ensure_ascii), 500, [("Content-Type", "application/json; charset=utf-8")]
 
 
@@ -400,3 +420,4 @@ if __name__ == "__main__":
                          # Jednodušší je spouštět debugování skrze VSCode debugger
 
 save_db()
+logging.info("Quitting...")
