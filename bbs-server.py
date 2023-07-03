@@ -1,7 +1,7 @@
 from flask import Flask, request
 import json
 from time import time
-from os import urandom, name
+from os import urandom, name, makedirs, path
 from base64 import b64encode
 from copy import deepcopy
 import logging
@@ -29,6 +29,9 @@ try:
         with gzopen(f"logs{divider}{datetime}.log.gz", "wb") as f_out:
             copyfileobj(f_in, f_out)
 except FileNotFoundError: pass
+
+if not path.exists("logs"):
+    makedirs("logs")
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%d.%m.%Y %H:%M:%S', filename=f"logs{divider}lastest.log", filemode="w")
 logging.info("Starting up...")
