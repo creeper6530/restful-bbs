@@ -199,6 +199,9 @@ def post_auth(action):
         data = request.get_json()
         
         if action == "login":
+            try: data["username"]; data["password"]
+            except KeyError: return json.dumps({"error": "Missing parameters."}, ensure_ascii=ensure_ascii), 400, [("Content-Type", "application/json; charset=utf-8")]
+
             result = login(data["username"], data["password"])
             if type(result) is bytes:
                 new_token = result.decode()
@@ -206,24 +209,36 @@ def post_auth(action):
             return result
         
         elif action == "logout":
+            try: data["token"]
+            except KeyError: return json.dumps({"error": "Missing parameters."}, ensure_ascii=ensure_ascii), 400, [("Content-Type", "application/json; charset=utf-8")]
+
             result = logout(data["token"])
             if result == True:
                 return "", 204, [("Content-Type", "application/json; charset=utf-8")]
             return result
         
         elif action == "register":
+            try: data["username"]; data["password"]
+            except KeyError: return json.dumps({"error": "Missing parameters."}, ensure_ascii=ensure_ascii), 400, [("Content-Type", "application/json; charset=utf-8")]
+
             result = register(data["username"], data["password"])
             if result == True:
                 return "", 204, [("Content-Type", "application/json; charset=utf-8")]
             return result
         
         elif action == "unregister":
+            try: data["username"]; data["password"]
+            except KeyError: return json.dumps({"error": "Missing parameters."}, ensure_ascii=ensure_ascii), 400, [("Content-Type", "application/json; charset=utf-8")]
+
             result = unregister(data["username"], data["password"])
             if result == True:
                 return "", 204, [("Content-Type", "application/json; charset=utf-8")]
             return result
         
         elif action == "chpasswd":
+            try: data["username"]; data["old_password"]; data["new_password"]
+            except KeyError: return json.dumps({"error": "Missing parameters."}, ensure_ascii=ensure_ascii), 400, [("Content-Type", "application/json; charset=utf-8")]
+
             result = chpasswd(data["username"], data["old_password"], data["new_password"])
             if result == True:
                 return "", 204, [("Content-Type", "application/json; charset=utf-8")]
@@ -252,6 +267,8 @@ def list_boards():
 def add_board():
     if request.is_json:
         new_board = request.get_json()
+        try: new_board["name"]
+        except KeyError: return json.dumps({"error": "Missing parameters."}, ensure_ascii=ensure_ascii), 400, [("Content-Type", "application/json; charset=utf-8")]
 
         try: result = check_token(new_board["token"])
         except KeyError: return json.dumps({"error": "Token not provided."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
@@ -276,6 +293,8 @@ def add_board():
 def delete_board():
     if request.is_json:
         board_to_delete = request.get_json()
+        try: board_to_delete["name"]
+        except KeyError: return json.dumps({"error": "Missing parameters."}, ensure_ascii=ensure_ascii), 400, [("Content-Type", "application/json; charset=utf-8")]
 
         try: result = check_token(board_to_delete["token"])
         except KeyError: return json.dumps({"error": "Token not provided."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
@@ -302,6 +321,8 @@ def posts_on_board(board_name):
 def add_on_board(board_name):
     if request.is_json:
         new_post = request.get_json()
+        try: new_post["title"]; new_post["contents"]
+        except KeyError: return json.dumps({"error": "Missing parameters."}, ensure_ascii=ensure_ascii), 400, [("Content-Type", "application/json; charset=utf-8")]
 
         new_post["author"] = get_user_from_token(new_post["token"])
 
@@ -315,16 +336,10 @@ def add_on_board(board_name):
         for board in board_list:
             if board["name"] == board_name:
 
-                try:
-                    if new_post["title"]== "": # Pokud je titulek prázdný string nebo chybí
-                        raise KeyError
-                except KeyError:
+                if new_post["title"]== "": # Pokud je titulek prázdný string nebo chybí
                     new_post["title"] = "Untitled post"
 
-                try:
-                    if new_post["contents"] == "":
-                        raise KeyError
-                except KeyError:
+                if new_post["contents"] == "":
                     new_post["contents"] = "No contents"
 
                 new_post["id"] = len(board["posts"])
@@ -337,6 +352,8 @@ def add_on_board(board_name):
 def delete_post(board_name):
     if request.is_json:
         post_to_delete = request.get_json()
+        try: post_to_delete["id"]
+        except KeyError: return json.dumps({"error": "Missing parameters."}, ensure_ascii=ensure_ascii), 400, [("Content-Type", "application/json; charset=utf-8")]
 
         try: result = check_token(post_to_delete["token"])
         except KeyError: return json.dumps({"error": "Token not provided."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
@@ -360,11 +377,11 @@ def delete_post(board_name):
 
 @app.errorhandler(400)
 def err_400(error):
-    return json.dumps({"error": "Bad request."}), 400, [("Content-Type", "application/json; charset=utf-8")]
+    return json.dumps({"error": "The request was malformed."}, ensure_ascii=ensure_ascii), 400, [("Content-Type", "application/json; charset=utf-8")]
 
 @app.errorhandler(404)
 def err_404(error):
-    return json.dumps({"error": "Requested endpoint can't be found."}), 404, [("Content-Type", "application/json; charset=utf-8")]
+    return json.dumps({"error": "Requested endpoint can't be found."}, ensure_ascii=ensure_ascii), 404, [("Content-Type", "application/json; charset=utf-8")]
 
 @app.errorhandler(405)
 def err_405(error):
@@ -372,7 +389,7 @@ def err_405(error):
 
 @app.errorhandler(500)
 def err_500(error):
-    return json.dumps({"error": "Internal server error. Please notify the administrator."}), 500, [("Content-Type", "application/json; charset=utf-8")]
+    return json.dumps({"error": "Internal server error. Please notify the administrator."}, ensure_ascii=ensure_ascii), 500, [("Content-Type", "application/json; charset=utf-8")]
 
 
 
