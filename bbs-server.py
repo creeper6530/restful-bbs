@@ -37,8 +37,15 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 logging.info("Starting up...")
 
 app = Flask(__name__)
+port = 5000
 
 ensure_ascii = True
+
+treat_ufw = True
+if treat_ufw: from os import system
+
+
+
 
 def load_db():
     logging.info("Loading DBs...")
@@ -51,6 +58,7 @@ def load_db():
             board_list = json.load(file)
 
     except FileNotFoundError:
+        logging.warning("bbs.json not found. Using default, sample DB.")
         board_list = [{"name": "Lobby",
                 "posts": []},
 
@@ -65,6 +73,7 @@ def load_db():
             users_list = json.load(file)
 
     except FileNotFoundError:
+        logging.warning("users.json not found. Using default, sample DB.")
         users_list = [{"username": "guest1",
                 "password": "qwerty",
                 "enabled": True},
@@ -82,6 +91,7 @@ def load_db():
             token_pair_list = json.load(file)
 
     except FileNotFoundError:
+        logging.warning("tokens.json not found. Using default, sample DB.")
         token_pair_list = [{"user": "guest1",
                 "token": "hcHci68fFJE=",
                 "valid_until": 1470987405}, # Před ~7 lety
@@ -99,6 +109,7 @@ def load_db():
                                            # Tvorba kopie je potřeba, aby for smyčka nic nepřeskočila
     for token_pair in tmp_pair_list:
         if token_pair["valid_until"] < int(time()):
+            logging.debug(f"Found an expired token pair: {json.dumps(token_pair)}")
             token_pair_list.remove(token_pair)
     del tmp_pair_list # Smažeme kopii, abychom ušetřili paměť
 
@@ -120,6 +131,7 @@ def login(usr: str, passwd: str):
     for user in users_list:
         if user["username"] == usr and user["password"] == passwd:
             if not user["enabled"]:
+                logging.warning(f"{request.remote_addr} tried to log into disabled user ({usr}).")
                 return json.dumps({"error": "User is disabled."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
 
             token_length = 64 # v bitech
@@ -128,37 +140,45 @@ def login(usr: str, passwd: str):
             
             new_token_pair = {"user": usr, "token": new_token, "valid_until": new_valid_until}
             token_pair_list.append(new_token_pair)
+            logging.info(f"{request.remote_addr} logged in as {user['username']}.")
             return new_token.encode()
+    logging.warning(f"{request.remote_addr} tried to log in with invalid credentials ({usr}; {passwd}).")
     return json.dumps({"error": "User credentials are incorrect."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
 
 def logout(token: str):
     for token_pair in token_pair_list:
         if token_pair["token"] == token:
             token_pair_list.remove(token_pair)
+            logging.info(f"{request.remote_addr} logged out {token_pair['user']}.")
             return True
     return json.dumps({"error": "Token not found."}, ensure_ascii=ensure_ascii), 498, [("Content-Type", "application/json; charset=utf-8")]
 
 def register(usr: str, passwd: str):
     for user in users_list:
         if user["username"] == usr:
+            logging.warning(f"{request.remote_addr} tried to register already existing user ({usr}).")
             return json.dumps({"error": "User with designed username already exists."}, ensure_ascii=ensure_ascii), 409, [("Content-Type", "application/json; charset=utf-8")]
-    
     new_user = {"username": usr, "password": passwd, "enabled": True}
     users_list.append(new_user)
+    logging.info(f"{request.remote_addr} registered as {usr}.")
     return True
 
 def unregister(usr: str, passwd: str):
     for user in users_list:
         if user["username"] == usr and user["password"] == passwd:
             users_list.remove(user)
+            logging.info(f"{request.remote_addr} unregistered {usr}.")
             return True
+    logging.warning(f"{request.remote_addr} tried to unregister with invalid credentials ({usr}; {passwd}).")
     return json.dumps({"error": "User with designed credentials not found."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
 
 def chpasswd(usr: str, old_passwd:str, new_passwd: str):
     for user in users_list:
         if user["username"] == usr and user["password"] == old_passwd:
             user["password"] = new_passwd
+            logging.info(f"{request.remote_addr} changed password for {usr}.")
             return True
+    logging.warning(f"{request.remote_addr} tried to change password with invalid credentials ({usr}; {old_passwd}; {new_passwd}).")
     return json.dumps({"error": "User with designed credentials not found."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
 
 def check_token(token: str):
@@ -166,8 +186,10 @@ def check_token(token: str):
         if token_pair["token"] == token:
             if token_pair["valid_until"] < int(time()):
                 logout(token_pair["token"])
+                logging.warning(f"{request.remote_addr} tried to use expired token.")
                 return json.dumps({"error": "Token is expired. Please relogin."}, ensure_ascii=ensure_ascii), 440, [("Content-Type", "application/json; charset=utf-8")]
             return True
+    logging.warning(f"{request.remote_addr} tried to use non-existent token.")
     return json.dumps({"error": "Token not found. Please relogin."}, ensure_ascii=ensure_ascii), 498, [("Content-Type", "application/json; charset=utf-8")]
 
 def get_user_from_token(token: str):
@@ -417,10 +439,16 @@ def err_500(error):
 
 
 
+if treat_ufw:
+    logging.info("Adding UFW rule...")
+    system(f"sudo ufw allow {port}/tcp")
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=False) # Pokud debug=True, jakékoli změny do JSON databáze
+    app.run(host="0.0.0.0", debug=False, port=port) # Pokud debug=True, jakékoli změny do JSON databáze
                          # se zahodí po ukončení nebo reloadu
                          # Jednodušší je spouštět debugování skrze VSCode debugger
+if treat_ufw:
+    logging.info("Deleting UFW rule...")
+    system(f"sudo ufw delete allow {port}/tcp")
 
 save_db()
 logging.info("Quitting...")
