@@ -413,7 +413,7 @@ The following error descriptions supplement the errors in specific cases.
 ## All-time general
 | Status | Description |
 | --- | --- |
-| 400 BAD REQUEST | The request was malformed. |
+| 400 BAD REQUEST | The request was malformed. This is most commonly caused by missing parameters. |
 | 404 NOT FOUND | Requested endpoint does not exist. |
 | 405 METHOD NOT ALLOWED | HTTP method requested is not permitted at designed endpoint. |
 | 500 INTERNAL SERVER ERROR | Error occured in the server code. Please notify the administrator in case this happens. |
