@@ -313,7 +313,6 @@ def post_auth(action):
 
 @app.get("/")
 def root():
-    raise Exception # Temporary, used to test exception logging
     return "This server is currently to be accesed only via the API.", 501 # Todo: odeslat klientský program
 
 @app.get("/boards")
