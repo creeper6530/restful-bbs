@@ -1,2 +1,7 @@
 /.vscode
 /__pycache__
+
+# Ignore logs
+/logs/*
+# Except this file
+!/logs/compress.sh

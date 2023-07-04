@@ -1,35 +1,65 @@
 from flask import Flask, request
 import json
 from time import time
-from os import urandom, name
+from os import urandom, name, makedirs, path
 from base64 import b64encode
 from copy import deepcopy
+import logging
+from gzip import open as gzopen
+from shutil import copyfileobj
 
 
 
-
-app = Flask(__name__)
 
 if name == "nt":
-    dividor = "\\"
+    divider = "\\"
 elif name == "posix":
-    dividor = "/"
+    divider = "/"
 else: raise NotImplementedError
+
+try:
+    with open(f"logs{divider}lastest.log", "r") as old_log:
+        datetime = old_log.read(19)
+    datetime = datetime.replace(" ", "_")
+    datetime = datetime.replace(".", "_")
+    datetime = datetime.replace(":", "_")
+
+        
+    with open(f"logs{divider}lastest.log", "rb") as f_in:
+        with gzopen(f"logs{divider}{datetime}.log.gz", "wb") as f_out:
+            copyfileobj(f_in, f_out)
+except FileNotFoundError: pass
+
+if not path.exists("logs"):
+    makedirs("logs")
+
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%d.%m.%Y %H:%M:%S', filename=f"logs{divider}lastest.log", filemode="w")
+logging.info("Starting up...")
+
+app = Flask(__name__)
+port = 5000
 
 ensure_ascii = True
 
+treat_ufw = True
+if name != "posix": treat_ufw = False # UFW does not exist on Windows
+if treat_ufw: from os import system
+
+
+
 
 def load_db():
+    logging.info("Loading DBs...")
     global board_list
     global users_list
     global token_pair_list
-    print("Loading DBs...")
-
+    
     try:
-        with open(f"bbs_data{dividor}bbs.json", "r") as file:
+        with open(f"bbs_data{divider}bbs.json", "r") as file:
             board_list = json.load(file)
 
     except FileNotFoundError:
+        logging.warning("bbs.json not found. Using default, sample DB.")
         board_list = [{"name": "Lobby",
                 "posts": []},
 
@@ -40,10 +70,11 @@ def load_db():
                     "id": 0}]}]
 
     try:
-        with open(f"bbs_data{dividor}users.json", "r") as file:
+        with open(f"bbs_data{divider}users.json", "r") as file:
             users_list = json.load(file)
 
     except FileNotFoundError:
+        logging.warning("users.json not found. Using default, sample DB.")
         users_list = [{"username": "guest1",
                 "password": "qwerty",
                 "enabled": True},
@@ -57,10 +88,11 @@ def load_db():
                 "enabled": False}]
 
     try:
-        with open(f"bbs_data{dividor}tokens.json", "r") as file:
+        with open(f"bbs_data{divider}tokens.json", "r") as file:
             token_pair_list = json.load(file)
 
     except FileNotFoundError:
+        logging.warning("tokens.json not found. Using default, sample DB.")
         token_pair_list = [{"user": "guest1",
                 "token": "hcHci68fFJE=",
                 "valid_until": 1470987405}, # Před ~7 lety
@@ -73,23 +105,24 @@ def load_db():
                 "token": "CKJbn897hds=",
                 "valid_until": 1470987405}]
         
-    print("Checking token DB...")
+    logging.info("Checking token DB...")
     tmp_pair_list = token_pair_list.copy() # Funkce copy() zabraňuje vzniku reference na objekt token_pair_list
                                            # Tvorba kopie je potřeba, aby for smyčka nic nepřeskočila
     for token_pair in tmp_pair_list:
         if token_pair["valid_until"] < int(time()):
+            logging.debug(f"Found an expired token pair: {json.dumps(token_pair)}")
             token_pair_list.remove(token_pair)
     del tmp_pair_list # Smažeme kopii, abychom ušetřili paměť
 
 load_db()
 
 def save_db():
-    print("Saving DBs...")
-    with open(f"bbs_data{dividor}bbs.json", "w") as file:
+    logging.info("Saving DBs...")
+    with open(f"bbs_data{divider}bbs.json", "w") as file:
         json.dump(board_list, file, indent=4, ensure_ascii=ensure_ascii)
-    with open(f"bbs_data{dividor}users.json", "w") as file:
+    with open(f"bbs_data{divider}users.json", "w") as file:
         json.dump(users_list, file, indent=4, ensure_ascii=ensure_ascii)
-    with open(f"bbs_data{dividor}tokens.json", "w") as file:
+    with open(f"bbs_data{divider}tokens.json", "w") as file:
         json.dump(token_pair_list, file, indent=4, ensure_ascii=ensure_ascii)
 
 
@@ -99,6 +132,7 @@ def login(usr: str, passwd: str):
     for user in users_list:
         if user["username"] == usr and user["password"] == passwd:
             if not user["enabled"]:
+                logging.warning(f"{request.remote_addr} tried to log into disabled user ({usr}).")
                 return json.dumps({"error": "User is disabled."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
 
             token_length = 64 # v bitech
@@ -107,37 +141,45 @@ def login(usr: str, passwd: str):
             
             new_token_pair = {"user": usr, "token": new_token, "valid_until": new_valid_until}
             token_pair_list.append(new_token_pair)
+            logging.info(f"{request.remote_addr} logged in as {user['username']}.")
             return new_token.encode()
+    logging.warning(f"{request.remote_addr} tried to log in with invalid credentials ({usr}; {passwd}).")
     return json.dumps({"error": "User credentials are incorrect."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
 
 def logout(token: str):
     for token_pair in token_pair_list:
         if token_pair["token"] == token:
             token_pair_list.remove(token_pair)
+            logging.info(f"{request.remote_addr} logged out {token_pair['user']}.")
             return True
     return json.dumps({"error": "Token not found."}, ensure_ascii=ensure_ascii), 498, [("Content-Type", "application/json; charset=utf-8")]
 
 def register(usr: str, passwd: str):
     for user in users_list:
         if user["username"] == usr:
+            logging.warning(f"{request.remote_addr} tried to register already existing user ({usr}).")
             return json.dumps({"error": "User with designed username already exists."}, ensure_ascii=ensure_ascii), 409, [("Content-Type", "application/json; charset=utf-8")]
-    
     new_user = {"username": usr, "password": passwd, "enabled": True}
     users_list.append(new_user)
+    logging.info(f"{request.remote_addr} registered as {usr}.")
     return True
 
 def unregister(usr: str, passwd: str):
     for user in users_list:
         if user["username"] == usr and user["password"] == passwd:
             users_list.remove(user)
+            logging.info(f"{request.remote_addr} unregistered {usr}.")
             return True
+    logging.warning(f"{request.remote_addr} tried to unregister with invalid credentials ({usr}; {passwd}).")
     return json.dumps({"error": "User with designed credentials not found."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
 
 def chpasswd(usr: str, old_passwd:str, new_passwd: str):
     for user in users_list:
         if user["username"] == usr and user["password"] == old_passwd:
             user["password"] = new_passwd
+            logging.info(f"{request.remote_addr} changed password for {usr}.")
             return True
+    logging.warning(f"{request.remote_addr} tried to change password with invalid credentials ({usr}; {old_passwd}; {new_passwd}).")
     return json.dumps({"error": "User with designed credentials not found."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
 
 def check_token(token: str):
@@ -145,8 +187,10 @@ def check_token(token: str):
         if token_pair["token"] == token:
             if token_pair["valid_until"] < int(time()):
                 logout(token_pair["token"])
+                logging.warning(f"{request.remote_addr} tried to use expired token.")
                 return json.dumps({"error": "Token is expired. Please relogin."}, ensure_ascii=ensure_ascii), 440, [("Content-Type", "application/json; charset=utf-8")]
             return True
+    logging.warning(f"{request.remote_addr} tried to use non-existent token.")
     return json.dumps({"error": "Token not found. Please relogin."}, ensure_ascii=ensure_ascii), 498, [("Content-Type", "application/json; charset=utf-8")]
 
 def get_user_from_token(token: str):
@@ -164,7 +208,9 @@ def reload_db():
         data = request.get_json()
 
         try: result = check_token(data["token"])
-        except KeyError: return json.dumps({"error": "Token not provided."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
+        except KeyError:
+            logging.warning(f"{request.remote_addr} did not provide a token.")
+            return json.dumps({"error": "Token not provided."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
         if result != True:
             return result
 
@@ -178,7 +224,9 @@ def save_db_api():
         data = request.get_json()
 
         try: result = check_token(data["token"])
-        except KeyError: return json.dumps({"error": "Token not provided."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
+        except KeyError:
+            logging.warning(f"{request.remote_addr} did not provide a token.")
+            return json.dumps({"error": "Token not provided."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
         if result != True:
             return result
 
@@ -200,7 +248,9 @@ def post_auth(action):
         
         if action == "login":
             try: data["username"]; data["password"]
-            except KeyError: return json.dumps({"error": "Missing parameters."}, ensure_ascii=ensure_ascii), 400, [("Content-Type", "application/json; charset=utf-8")]
+            except KeyError:
+                logging.warning(f"{request.remote_addr} did not provide enough parameters.")
+                return json.dumps({"error": "Missing parameters."}, ensure_ascii=ensure_ascii), 400, [("Content-Type", "application/json; charset=utf-8")]
 
             result = login(data["username"], data["password"])
             if type(result) is bytes:
@@ -210,7 +260,9 @@ def post_auth(action):
         
         elif action == "logout":
             try: data["token"]
-            except KeyError: return json.dumps({"error": "Missing parameters."}, ensure_ascii=ensure_ascii), 400, [("Content-Type", "application/json; charset=utf-8")]
+            except KeyError:
+                logging.warning(f"{request.remote_addr} did not provide enough parameters.")
+                return json.dumps({"error": "Missing parameters."}, ensure_ascii=ensure_ascii), 400, [("Content-Type", "application/json; charset=utf-8")]
 
             result = logout(data["token"])
             if result == True:
@@ -219,7 +271,9 @@ def post_auth(action):
         
         elif action == "register":
             try: data["username"]; data["password"]
-            except KeyError: return json.dumps({"error": "Missing parameters."}, ensure_ascii=ensure_ascii), 400, [("Content-Type", "application/json; charset=utf-8")]
+            except KeyError:
+                logging.warning(f"{request.remote_addr} did not provide enough parameters.")
+                return json.dumps({"error": "Missing parameters."}, ensure_ascii=ensure_ascii), 400, [("Content-Type", "application/json; charset=utf-8")]
 
             result = register(data["username"], data["password"])
             if result == True:
@@ -228,7 +282,9 @@ def post_auth(action):
         
         elif action == "unregister":
             try: data["username"]; data["password"]
-            except KeyError: return json.dumps({"error": "Missing parameters."}, ensure_ascii=ensure_ascii), 400, [("Content-Type", "application/json; charset=utf-8")]
+            except KeyError:
+                logging.warning(f"{request.remote_addr} did not provide enough parameters.")
+                return json.dumps({"error": "Missing parameters."}, ensure_ascii=ensure_ascii), 400, [("Content-Type", "application/json; charset=utf-8")]
 
             result = unregister(data["username"], data["password"])
             if result == True:
@@ -237,14 +293,18 @@ def post_auth(action):
         
         elif action == "chpasswd":
             try: data["username"]; data["old_password"]; data["new_password"]
-            except KeyError: return json.dumps({"error": "Missing parameters."}, ensure_ascii=ensure_ascii), 400, [("Content-Type", "application/json; charset=utf-8")]
+            except KeyError:
+                logging.warning(f"{request.remote_addr} did not provide enough parameters.")
+                return json.dumps({"error": "Missing parameters."}, ensure_ascii=ensure_ascii), 400, [("Content-Type", "application/json; charset=utf-8")]
 
             result = chpasswd(data["username"], data["old_password"], data["new_password"])
             if result == True:
                 return "", 204, [("Content-Type", "application/json; charset=utf-8")]
             return result
-    
-        else: return json.dumps({"error": "Unsupported action."}, ensure_ascii=ensure_ascii), 422, [("Content-Type", "application/json; charset=utf-8")]
+
+        else: 
+            logging.warning(f"{request.remote_addr} tried an unsupported action.")
+            return json.dumps({"error": "Unsupported action."}, ensure_ascii=ensure_ascii), 422, [("Content-Type", "application/json; charset=utf-8")]
     
     return json.dumps({"error": "Request must be JSON."}, ensure_ascii=ensure_ascii), 415, [("Content-Type", "application/json; charset=utf-8")]
 
@@ -253,6 +313,7 @@ def post_auth(action):
 
 @app.get("/")
 def root():
+    raise Exception # Temporary, used to test exception logging
     return "This server is currently to be accesed only via the API.", 501 # Todo: odeslat klientský program
 
 @app.get("/boards")
@@ -268,23 +329,32 @@ def add_board():
     if request.is_json:
         new_board = request.get_json()
         try: new_board["name"]
-        except KeyError: return json.dumps({"error": "Missing parameters."}, ensure_ascii=ensure_ascii), 400, [("Content-Type", "application/json; charset=utf-8")]
+        except KeyError:
+            logging.warning(f"{request.remote_addr} did not provide enough parameters.")
+            return json.dumps({"error": "Missing parameters."}, ensure_ascii=ensure_ascii), 400, [("Content-Type", "application/json; charset=utf-8")]
 
         try: result = check_token(new_board["token"])
-        except KeyError: return json.dumps({"error": "Token not provided."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
+        except KeyError:
+            logging.warning(f"{request.remote_addr} did not provide a token.")
+            return json.dumps({"error": "Token not provided."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
+        
         if result != True:
             return result
+        used_token = new_board["token"]
         new_board.pop("token")
 
         if not new_board["name"].isalnum():
+            logging.warning(f"{request.remote_addr} tried to create a board with invalid name.")
             return json.dumps({"error": "Board name must be alphanumeric (A-Z, a-z, 0-9)."}), 400, [("Content-Type", "application/json; charset=utf-8")]
 
         for board in board_list:
             if board["name"] == new_board["name"]:
+                logging.warning(f"{request.remote_addr} tried to create an existing board.")
                 return json.dumps({"error": "Board with designed name already exists."}, ensure_ascii=ensure_ascii), 409, [("Content-Type", "application/json; charset=utf-8")]
 
         new_board["posts"] = []
         board_list.append(new_board)
+        logging.info(f"{request.remote_addr} created a board ({new_board['name']}) as {get_user_from_token(used_token)}.")
         return "", 204, [("Content-Type", "application/json; charset=utf-8")]
     
     return json.dumps({"error": "Request must be JSON."}, ensure_ascii=ensure_ascii), 415, [("Content-Type", "application/json; charset=utf-8")]
@@ -294,18 +364,25 @@ def delete_board():
     if request.is_json:
         board_to_delete = request.get_json()
         try: board_to_delete["name"]
-        except KeyError: return json.dumps({"error": "Missing parameters."}, ensure_ascii=ensure_ascii), 400, [("Content-Type", "application/json; charset=utf-8")]
+        except KeyError:
+            logging.warning(f"{request.remote_addr} did not provide enough parameters.")
+            return json.dumps({"error": "Missing parameters."}, ensure_ascii=ensure_ascii), 400, [("Content-Type", "application/json; charset=utf-8")]
 
         try: result = check_token(board_to_delete["token"])
-        except KeyError: return json.dumps({"error": "Token not provided."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
+        except KeyError:
+            logging.warning(f"{request.remote_addr} did not provide a token.")
+            return json.dumps({"error": "Token not provided."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
+        
         if result != True:
             return result
 
         for board in board_list:
             if board["name"] == board_to_delete["name"]:
                 board_list.remove(board)
+                logging.info(f"{request.remote_addr} deleted a board ({board_to_delete['name']}) as {get_user_from_token(board_to_delete['token'])}.")
                 return "", 204, [("Content-Type", "application/json; charset=utf-8")]
             
+        logging.warning(f"{request.remote_addr} tried to access non-existent board.")    
         return json.dumps({"error": "Board does not exist."}, ensure_ascii=ensure_ascii), 404, [("Content-Type", "application/json; charset=utf-8")]
     return json.dumps({"error": "Request must be JSON."}, ensure_ascii=ensure_ascii), 415, [("Content-Type", "application/json; charset=utf-8")]
 
@@ -315,6 +392,7 @@ def posts_on_board(board_name):
         if board["name"] == board_name:
             return json.dumps(board["posts"], ensure_ascii=ensure_ascii), 200, [("Content-Type", "application/json; charset=utf-8")]
         
+    logging.warning(f"{request.remote_addr} tried to access non-existent board.")     
     return json.dumps({"error": "Board not found."}, ensure_ascii=ensure_ascii), 404, [("Content-Type", "application/json; charset=utf-8")]
 
 @app.post("/boards/<board_name>")
@@ -322,21 +400,27 @@ def add_on_board(board_name):
     if request.is_json:
         new_post = request.get_json()
         try: new_post["title"]; new_post["contents"]
-        except KeyError: return json.dumps({"error": "Missing parameters."}, ensure_ascii=ensure_ascii), 400, [("Content-Type", "application/json; charset=utf-8")]
-
-        new_post["author"] = get_user_from_token(new_post["token"])
+        except KeyError:
+            logging.warning(f"{request.remote_addr} did not provide enough parameters.")
+            return json.dumps({"error": "Missing parameters."}, ensure_ascii=ensure_ascii), 400, [("Content-Type", "application/json; charset=utf-8")]
 
         try: result = check_token(new_post["token"])
-        except KeyError: return json.dumps({"error": "Token not provided."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
+        except KeyError:
+            logging.warning(f"{request.remote_addr} did not provide a token.")
+            return json.dumps({"error": "Token not provided."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
+        
+        new_post["author"] = get_user_from_token(new_post["token"])
+
         if result != True:
             return result
+        used_token = new_post["token"]
         new_post.pop("token")
 
         
         for board in board_list:
             if board["name"] == board_name:
 
-                if new_post["title"]== "": # Pokud je titulek prázdný string nebo chybí
+                if new_post["title"]== "": # Pokud je titulek prázdný string
                     new_post["title"] = "Untitled post"
 
                 if new_post["contents"] == "":
@@ -344,7 +428,10 @@ def add_on_board(board_name):
 
                 new_post["id"] = len(board["posts"])
                 board["posts"].append(new_post)
+                logging.info(f"{request.remote_addr} created a post ({new_post['name']}) as {get_user_from_token(used_token)}.")
                 return "", 204, [("Content-Type", "application/json; charset=utf-8")]
+            
+        logging.warning(f"{request.remote_addr} tried to access non-existent board.")
         return json.dumps({"error": "Board does not exist."}, ensure_ascii=ensure_ascii), 404, [("Content-Type", "application/json; charset=utf-8")]    
     return json.dumps({"error": "Request must be JSON."}, ensure_ascii=ensure_ascii), 415, [("Content-Type", "application/json; charset=utf-8")]
 
@@ -353,10 +440,15 @@ def delete_post(board_name):
     if request.is_json:
         post_to_delete = request.get_json()
         try: post_to_delete["id"]
-        except KeyError: return json.dumps({"error": "Missing parameters."}, ensure_ascii=ensure_ascii), 400, [("Content-Type", "application/json; charset=utf-8")]
+        except KeyError:
+            logging.warning(f"{request.remote_addr} did not provide enough parameters.")
+            return json.dumps({"error": "Missing parameters."}, ensure_ascii=ensure_ascii), 400, [("Content-Type", "application/json; charset=utf-8")]
 
         try: result = check_token(post_to_delete["token"])
-        except KeyError: return json.dumps({"error": "Token not provided."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
+        except KeyError:
+            logging.warning(f"{request.remote_addr} did not provide a token.")
+            return json.dumps({"error": "Token not provided."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
+        
         if result != True:
             return result
 
@@ -365,10 +457,13 @@ def delete_post(board_name):
                 for post in board["posts"]:
                     if post["id"] == post_to_delete["id"]:
                         board["posts"].remove(post)
+                        logging.info(f"{request.remote_addr} deleted a post ({post_to_delete['name']}) as {get_user_from_token(post_to_delete['token'])}.")
                         return "", 204, [("Content-Type", "application/json; charset=utf-8")]
                 
+                logging.warning(f"{request.remote_addr} tried to delete non-existent post.")
                 return json.dumps({"error": "Post with designed ID does not exist in this board."}, ensure_ascii=ensure_ascii), 404, [("Content-Type", "application/json; charset=utf-8")]
             
+        logging.warning(f"{request.remote_addr} tried to access non-existent board.") 
         return json.dumps({"error": "Board does not exist."}, ensure_ascii=ensure_ascii), 404, [("Content-Type", "application/json; charset=utf-8")]
     return json.dumps({"error": "Request must be JSON."}, ensure_ascii=ensure_ascii), 415, [("Content-Type", "application/json; charset=utf-8")]
 
@@ -377,26 +472,37 @@ def delete_post(board_name):
 
 @app.errorhandler(400)
 def err_400(error):
+    logging.warning(f"{request.remote_addr} sent a malformed request.")
     return json.dumps({"error": "The request was malformed."}, ensure_ascii=ensure_ascii), 400, [("Content-Type", "application/json; charset=utf-8")]
 
 @app.errorhandler(404)
 def err_404(error):
+    logging.warning(f"{request.remote_addr} tried to access non-existent endpoint.")
     return json.dumps({"error": "Requested endpoint can't be found."}, ensure_ascii=ensure_ascii), 404, [("Content-Type", "application/json; charset=utf-8")]
 
 @app.errorhandler(405)
 def err_405(error):
+    logging.warning(f"{request.remote_addr} tried to access an endpoint using invalid method.")
     return json.dumps({"error": "Method not allowed."}, ensure_ascii=ensure_ascii), 405, [("Content-Type", "application/json; charset=utf-8")]
 
 @app.errorhandler(500)
 def err_500(error):
+    logging.error(f"Internal server error caused by a request from {request.remote_addr}")
     return json.dumps({"error": "Internal server error. Please notify the administrator."}, ensure_ascii=ensure_ascii), 500, [("Content-Type", "application/json; charset=utf-8")]
 
 
 
 
+if treat_ufw:
+    logging.info("Adding UFW rule...")
+    system(f"sudo ufw allow {port}/tcp")
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=False) # Pokud debug=True, jakékoli změny do JSON databáze
+    app.run(host="0.0.0.0", debug=False, port=port) # Pokud debug=True, jakékoli změny do JSON databáze
                          # se zahodí po ukončení nebo reloadu
                          # Jednodušší je spouštět debugování skrze VSCode debugger
+if treat_ufw:
+    logging.info("Deleting UFW rule...")
+    system(f"sudo ufw delete allow {port}/tcp")
 
 save_db()
+logging.info("Quitting...")
