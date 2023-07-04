@@ -10,7 +10,8 @@
 - [x] Rozděl `/auth` endpoint na jednotlivé `/auth/<action>`
 - [x] Sepiš dokumentaci
 - [x] Pořeš, když chybí i jiná políčka než token
-- [ ] Logování akcí i s uživatelem (zjistíš dle tokenu) a IP
+- [x] Logování akcí i s uživatelem (zjistíš dle tokenu) a IP
+- [ ] Hash users' passwords in DB
 - [ ] Implementuj oprávnění (zatím lze bez loginu GETovat a s loginem POSTovat i DELETEovat vše)
 - [ ] Klient
 - [ ] Pořeš načítání celé BBS do paměti (optimalizuj paměť) (možná by to šlo pořešit migrací na SQL)
