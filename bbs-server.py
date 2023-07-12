@@ -1,3 +1,4 @@
+#!/bin/python
 from flask import Flask, request
 import json
 from time import time
@@ -7,6 +8,7 @@ from copy import deepcopy
 import logging
 from gzip import open as gzopen
 from shutil import copyfileobj
+import bcrypt
 
 
 
@@ -130,10 +132,15 @@ def save_db():
 
 def login(usr: str, passwd: str):
     for user in users_list:
-        if user["username"] == usr and user["password"] == passwd:
+        if user["username"] == usr:
             if not user["enabled"]:
                 logging.warning(f"{request.remote_addr} tried to log into disabled user ({usr}).")
                 return json.dumps({"error": "User is disabled."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
+
+            logging.info("bcrypt: Checking password...")
+            if bcrypt.checkpw(passwd.encode(), user["password"].encode()) == False:
+                logging.warning(f"{request.remote_addr} tried to log in with invalid password ({usr}; {passwd}).")
+                return json.dumps({"error": "User credentials are incorrect."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
 
             token_length = 64 # v bitech
             new_token = b64encode(urandom(int(token_length/8))).decode().replace("=", "") # Pravděpodobnost shody 2**-<token_length>
@@ -143,7 +150,7 @@ def login(usr: str, passwd: str):
             token_pair_list.append(new_token_pair)
             logging.info(f"{request.remote_addr} logged in as {user['username']}.")
             return new_token.encode()
-    logging.warning(f"{request.remote_addr} tried to log in with invalid credentials ({usr}; {passwd}).")
+    logging.warning(f"{request.remote_addr} tried to log in with invalid username ({usr}; {passwd}).")
     return json.dumps({"error": "User credentials are incorrect."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
 
 def logout(token: str):
@@ -159,27 +166,46 @@ def register(usr: str, passwd: str):
         if user["username"] == usr:
             logging.warning(f"{request.remote_addr} tried to register already existing user ({usr}).")
             return json.dumps({"error": "User with designed username already exists."}, ensure_ascii=ensure_ascii), 409, [("Content-Type", "application/json; charset=utf-8")]
-    new_user = {"username": usr, "password": passwd, "enabled": True}
+    logging.info("bcrypt: Generating salt...")
+    salt = bcrypt.gensalt()
+    hashed_passwd = bcrypt.hashpw(passwd.encode(), salt).decode()
+    
+    new_user = {"username": usr, "password": hashed_passwd, "enabled": True}
     users_list.append(new_user)
     logging.info(f"{request.remote_addr} registered as {usr}.")
     return True
 
 def unregister(usr: str, passwd: str):
     for user in users_list:
-        if user["username"] == usr and user["password"] == passwd:
+        if user["username"] == usr:
+            
+            logging.info("bcrypt: Checking password...")
+            if bcrypt.checkpw(passwd.encode(), user["password"].encode()) == False:
+                logging.warning(f"{request.remote_addr} tried to unregister with invalid password ({usr}; {passwd}).")
+                return json.dumps({"error": "User with designed credentials not found."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
+
             users_list.remove(user)
             logging.info(f"{request.remote_addr} unregistered {usr}.")
             return True
-    logging.warning(f"{request.remote_addr} tried to unregister with invalid credentials ({usr}; {passwd}).")
+    logging.warning(f"{request.remote_addr} tried to unregister with invalid username ({usr}; {passwd}).")
     return json.dumps({"error": "User with designed credentials not found."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
 
 def chpasswd(usr: str, old_passwd:str, new_passwd: str):
     for user in users_list:
-        if user["username"] == usr and user["password"] == old_passwd:
-            user["password"] = new_passwd
+        if user["username"] == usr:# and user["password"] == old_passwd:
+
+            logging.info("bcrypt: Checking password...")
+            if bcrypt.checkpw(old_passwd.encode(), user["password"].encode()) == False:
+                logging.warning(f"{request.remote_addr} tried to unregister with invalid password ({usr}; {old_passwd}; {new_passwd}).")
+                return json.dumps({"error": "User with designed credentials not found."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
+
+            logging.info("bcrypt: Generating salt...")
+            salt = bcrypt.gensalt()
+
+            user["password"] = bcrypt.hashpw(new_passwd.encode(), salt).decode()
             logging.info(f"{request.remote_addr} changed password for {usr}.")
             return True
-    logging.warning(f"{request.remote_addr} tried to change password with invalid credentials ({usr}; {old_passwd}; {new_passwd}).")
+    logging.warning(f"{request.remote_addr} tried to change password with invalid username ({usr}; {old_passwd}; {new_passwd}).")
     return json.dumps({"error": "User with designed credentials not found."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
 
 def check_token(token: str):

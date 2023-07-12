@@ -1,17 +1,20 @@
 [
     {
         "username": "guest1",
-        "password": "qwerty",
-        "enabled": true
+        "password": "$2b$08$L6./s.77hzMfgh0KWkxxGe5RcbSNi42mBcU5gMZrOi6uO9WU2EjRa",
+        "enabled": true,
+        "__comment__password__": "qwerty"
     },
     {
         "username": "guest2",
-        "password": "12345678",
-        "enabled": false
+        "password": "$2b$08$Gqhf6COrTMHN29ESotnEEen6BRM/sXA1NQUV6dkyiVXOwQsH0/T7a",
+        "enabled": false,
+        "__comment__password__": "12345678"
     },
     {
         "username": "guest3",
-        "password": "password",
-        "enabled": false
+        "password": "$2b$12$YIqm4Eo6fqzm4rrCrftYRuQsWp1mMi0SNSxpt06MeVawV1NSEyl4a",
+        "enabled": false,
+        "__comment__password__": "password"
     }
 ]

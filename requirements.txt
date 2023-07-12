@@ -1,1 +1,2 @@
 Flask>=2.3.2
+bcrypt>=4.0.1 # I've had to build the bcrypt library manually on RPi because of some issues
