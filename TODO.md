@@ -12,7 +12,6 @@
 - [x] Pořeš, když chybí i jiná políčka než token
 - [x] Logování akcí i s uživatelem (zjistíš dle tokenu) a IP
 - [ ] Hash users' passwords in DB
-- [ ] Translate comments and TODOs to English (basically translate everything)
 - [ ] Implementuj oprávnění (zatím lze bez loginu GETovat a s loginem POSTovat i DELETEovat vše)
 - [ ] Klient
 - [ ] Pořeš načítání celé BBS do paměti (optimalizuj paměť) (možná by to šlo pořešit migrací na SQL)
