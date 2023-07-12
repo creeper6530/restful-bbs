@@ -11,7 +11,10 @@
 - [x] Sepiš dokumentaci
 - [x] Pořeš, když chybí i jiná políčka než token
 - [x] Logování akcí i s uživatelem (zjistíš dle tokenu) a IP
-- [ ] Hash users' passwords in DB
+- [x] Hash users' passwords in DB
+- [ ] Translate the whole project to English
+- [ ] Remove sample DBs in code
 - [ ] Implementuj oprávnění (zatím lze bez loginu GETovat a s loginem POSTovat i DELETEovat vše)
+- [ ] Sepiš unit testy (kontrola, že jsi nic nerozbil)
 - [ ] Klient
 - [ ] Pořeš načítání celé BBS do paměti (optimalizuj paměť) (možná by to šlo pořešit migrací na SQL)
