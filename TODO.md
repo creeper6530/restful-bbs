@@ -12,6 +12,7 @@
 - [x] Pořeš, když chybí i jiná políčka než token
 - [x] Logování akcí i s uživatelem (zjistíš dle tokenu) a IP
 - [x] Hash users' passwords in DB
+- [x] Optimize bcrypt's import
 - [ ] Translate the whole project to English
 - [ ] Remove sample DBs in code
 - [ ] Implementuj oprávnění (zatím lze bez loginu GETovat a s loginem POSTovat i DELETEovat vše)
