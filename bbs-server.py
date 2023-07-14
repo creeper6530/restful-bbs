@@ -8,7 +8,7 @@ from copy import deepcopy
 import logging
 from gzip import open as gzopen
 from shutil import copyfileobj
-import bcrypt
+from bcrypt import checkpw, gensalt, hashpw
 
 
 
@@ -138,7 +138,7 @@ def login(usr: str, passwd: str):
                 return json.dumps({"error": "User is disabled."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
 
             logging.info("bcrypt: Checking password...")
-            if bcrypt.checkpw(passwd.encode(), user["password"].encode()) == False:
+            if checkpw(passwd.encode(), user["password"].encode()) == False:
                 logging.warning(f"{request.remote_addr} tried to log in with invalid password ({usr}; {passwd}).")
                 return json.dumps({"error": "User credentials are incorrect."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
 
@@ -167,8 +167,8 @@ def register(usr: str, passwd: str):
             logging.warning(f"{request.remote_addr} tried to register already existing user ({usr}).")
             return json.dumps({"error": "User with designed username already exists."}, ensure_ascii=ensure_ascii), 409, [("Content-Type", "application/json; charset=utf-8")]
     logging.info("bcrypt: Generating salt...")
-    salt = bcrypt.gensalt()
-    hashed_passwd = bcrypt.hashpw(passwd.encode(), salt).decode()
+    salt = gensalt()
+    hashed_passwd = hashpw(passwd.encode(), salt).decode()
     
     new_user = {"username": usr, "password": hashed_passwd, "enabled": True}
     users_list.append(new_user)
@@ -180,7 +180,7 @@ def unregister(usr: str, passwd: str):
         if user["username"] == usr:
             
             logging.info("bcrypt: Checking password...")
-            if bcrypt.checkpw(passwd.encode(), user["password"].encode()) == False:
+            if checkpw(passwd.encode(), user["password"].encode()) == False:
                 logging.warning(f"{request.remote_addr} tried to unregister with invalid password ({usr}; {passwd}).")
                 return json.dumps({"error": "User with designed credentials not found."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
 
@@ -195,14 +195,14 @@ def chpasswd(usr: str, old_passwd:str, new_passwd: str):
         if user["username"] == usr:# and user["password"] == old_passwd:
 
             logging.info("bcrypt: Checking password...")
-            if bcrypt.checkpw(old_passwd.encode(), user["password"].encode()) == False:
+            if checkpw(old_passwd.encode(), user["password"].encode()) == False:
                 logging.warning(f"{request.remote_addr} tried to unregister with invalid password ({usr}; {old_passwd}; {new_passwd}).")
                 return json.dumps({"error": "User with designed credentials not found."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
 
             logging.info("bcrypt: Generating salt...")
-            salt = bcrypt.gensalt()
+            salt = gensalt()
 
-            user["password"] = bcrypt.hashpw(new_passwd.encode(), salt).decode()
+            user["password"] = hashpw(new_passwd.encode(), salt).decode()
             logging.info(f"{request.remote_addr} changed password for {usr}.")
             return True
     logging.warning(f"{request.remote_addr} tried to change password with invalid username ({usr}; {old_passwd}; {new_passwd}).")
