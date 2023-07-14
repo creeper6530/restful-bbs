@@ -4,16 +4,16 @@
         "posts": []
     },
     {
-        "name": "Technika",
+        "name": "Tech",
         "posts": [
             {
-                "title": "Test cislo 1",
+                "title": "Test number 1",
                 "contents": "Rokjsbj",
                 "author": "Administrator",
                 "id": 0
             },
             {
-                "title": "Test cislo 5874",
+                "title": "Test number 5874",
                 "contents": "vkhdbjs bk",
                 "author": "Administrator",
                 "id": 1
