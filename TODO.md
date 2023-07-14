@@ -14,7 +14,7 @@
 - [x] Hash users' passwords in DB
 - [x] Optimize bcrypt's import
 - [x] Translate the whole project to English
-- [ ] Remove sample DBs in code
+- [x] Remove sample DBs in code
 - [ ] Implement permissions (right now you can `GET` everything w/o login and `POST` or `DELETE` w/ login)
 - [ ] Write unit tests (check that nothing's broken)
 - [ ] Prettify/Format the code

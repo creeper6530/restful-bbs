@@ -61,51 +61,27 @@ def load_db():
             board_list = json.load(file)
 
     except FileNotFoundError:
-        logging.warning("bbs.json not found. Using default, sample DB.")
-        board_list = [{"name": "Lobby",
-                "posts": []},
-
-                {"name": "Technika",
-                "posts": [
-                    {"title": "LOLZ",
-                    "contents": "No contents",
-                    "id": 0}]}]
+        logging.warning("bbs.json not found. Committing seppuku.")
+        print("bbs.json not found. Committing seppuku.")
+        exit(1)
 
     try:
         with open(f"bbs_data{divider}users.json", "r") as file:
             users_list = json.load(file)
 
     except FileNotFoundError:
-        logging.warning("users.json not found. Using default, sample DB.")
-        users_list = [{"username": "guest1",
-                "password": "qwerty",
-                "enabled": True},
-
-                {"username": "guest2",
-                "password": "12345678",
-                "enabled": False},
-
-                {"username": "guest3",
-                "password": "password",
-                "enabled": False}]
+        logging.warning("users.json not found. Committing seppuku.")
+        print("users.json not found. Committing seppuku.")
+        exit(1)
 
     try:
         with open(f"bbs_data{divider}tokens.json", "r") as file:
             token_pair_list = json.load(file)
 
     except FileNotFoundError:
-        logging.warning("tokens.json not found. Using default, sample DB.")
-        token_pair_list = [{"user": "guest1",
-                "token": "hcHci68fFJE=",
-                "valid_until": 1470987405}, # ~7 years ago
-
-                {"user": "guest2",
-                "token": "Pa5oDCzuIFN=",
-                "valid_until": 1470987405},
-
-                {"user": "guest3",
-                "token": "CKJbn897hds=",
-                "valid_until": 1470987405}]
+        logging.warning("tokens.json not found. Committing seppuku.")
+        print("tokens.json not found. Committing seppuku.")
+        exit(1)
         
     logging.info("Checking token DB...")
     tmp_pair_list = token_pair_list.copy() # The copy() function prevents creation of reference to object token_pair_list
