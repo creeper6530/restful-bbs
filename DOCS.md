@@ -20,7 +20,7 @@ Returns a list of boards with name and number of posts on board.
     "posts": 0
   },
   {
-    "name": "Technika",
+    "name": "Tech",
     "posts": 3
   }
 ]
@@ -110,13 +110,13 @@ Returns a list of posts on a board with title, contents, author and ID of post.
 ```json
 [
     {
-        "title": "Test cislo 1",
+        "title": "Test number 1",
         "contents": "Rokjsbj",
         "author": "Administrator",
         "id": 0
     },
     {
-        "title": "Test cislo 5874",
+        "title": "Test number 5874",
         "contents": "vkhdbjs bk",
         "author": "Administrator",
         "id": 1
@@ -136,7 +136,7 @@ Returns a list of posts on a board with title, contents, author and ID of post.
 </table>
 
 ### Example
-`curl -i http://127.0.0.1:5000/boards/Technika -X GET`
+`curl -i http://127.0.0.1:5000/boards/Tech -X GET`
 
 ## Add a post on the board
 ### Endpoint
@@ -165,7 +165,7 @@ Returns a list of posts on a board with title, contents, author and ID of post.
 | 204 NO CONTENT | Successfully added post. No additional action needed. |
 | 404 NOT FOUND | Board with designed name does not exist. |
 ### Example
-`curl -i http://127.0.0.1:5000/boards/Technika -X POST -H 'Content-Type: application/json' -d '{"title": "Test", "contents": "Random article", "token":"S4mpl3T0k3n"}'`
+`curl -i http://127.0.0.1:5000/boards/Tech -X POST -H 'Content-Type: application/json' -d '{"title": "Test", "contents": "Random article", "token":"S4mpl3T0k3n"}'`
 
 ## Delete a post from the board
 ### Endpoint
@@ -193,7 +193,7 @@ Returns a list of posts on a board with title, contents, author and ID of post.
 | 204 NO CONTENT | Successfully deleted post. No additional action needed. |
 | 404 NOT FOUND | Board with designed name or post with designed ID does not exist. |
 ### Example
-`curl -i http://127.0.0.1:5000/boards/Technika -X DELETE -H 'Content-Type: application/json' -d '{"id": 3, "token":"S4mpl3T0k3n"}'`
+`curl -i http://127.0.0.1:5000/boards/Tech -X DELETE -H 'Content-Type: application/json' -d '{"id": 3, "token":"S4mpl3T0k3n"}'`
 
 
 <hr>
@@ -246,7 +246,7 @@ Returns a list of posts on a board with title, contents, author and ID of post.
 ### Responses
 | Status | Response |
 | --- | --- |
-| 204 NO CONTENT | DBs were successfully reloaded. |
+| 204 NO CONTENT | DBs were successfully saved. |
 ### Example
 `curl -i http://127.0.0.1:5000/save -X POST -H 'Content-Type: application/json' -d '{"token":"S4mpl3T0k3n"}'`
 

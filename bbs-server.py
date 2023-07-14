@@ -44,7 +44,7 @@ port = 5000
 ensure_ascii = True
 
 treat_ufw = True
-if name != "posix": treat_ufw = False # UFW does not exist on Windows
+if name == "nt": treat_ufw = False # UFW does not exist on Windows
 if treat_ufw: from os import system
 
 
@@ -61,60 +61,36 @@ def load_db():
             board_list = json.load(file)
 
     except FileNotFoundError:
-        logging.warning("bbs.json not found. Using default, sample DB.")
-        board_list = [{"name": "Lobby",
-                "posts": []},
-
-                {"name": "Technika",
-                "posts": [
-                    {"title": "LOLZ",
-                    "contents": "No contents",
-                    "id": 0}]}]
+        logging.warning("bbs.json not found. Committing seppuku.")
+        print("bbs.json not found. Committing seppuku.")
+        exit(1)
 
     try:
         with open(f"bbs_data{divider}users.json", "r") as file:
             users_list = json.load(file)
 
     except FileNotFoundError:
-        logging.warning("users.json not found. Using default, sample DB.")
-        users_list = [{"username": "guest1",
-                "password": "qwerty",
-                "enabled": True},
-
-                {"username": "guest2",
-                "password": "12345678",
-                "enabled": False},
-
-                {"username": "guest3",
-                "password": "password",
-                "enabled": False}]
+        logging.warning("users.json not found. Committing seppuku.")
+        print("users.json not found. Committing seppuku.")
+        exit(1)
 
     try:
         with open(f"bbs_data{divider}tokens.json", "r") as file:
             token_pair_list = json.load(file)
 
     except FileNotFoundError:
-        logging.warning("tokens.json not found. Using default, sample DB.")
-        token_pair_list = [{"user": "guest1",
-                "token": "hcHci68fFJE=",
-                "valid_until": 1470987405}, # Před ~7 lety
-
-                {"user": "guest2",
-                "token": "Pa5oDCzuIFN=",
-                "valid_until": 1470987405},
-
-                {"user": "guest3",
-                "token": "CKJbn897hds=",
-                "valid_until": 1470987405}]
+        logging.warning("tokens.json not found. Committing seppuku.")
+        print("tokens.json not found. Committing seppuku.")
+        exit(1)
         
     logging.info("Checking token DB...")
-    tmp_pair_list = token_pair_list.copy() # Funkce copy() zabraňuje vzniku reference na objekt token_pair_list
-                                           # Tvorba kopie je potřeba, aby for smyčka nic nepřeskočila
+    tmp_pair_list = token_pair_list.copy() # The copy() function prevents creation of reference to object token_pair_list
+                                           # It is needed in order to prevent the for loop from skipping anything
     for token_pair in tmp_pair_list:
         if token_pair["valid_until"] < int(time()):
             logging.debug(f"Found an expired token pair: {json.dumps(token_pair)}")
             token_pair_list.remove(token_pair)
-    del tmp_pair_list # Smažeme kopii, abychom ušetřili paměť
+    del tmp_pair_list # We delete the copy in order to save memory
 
 load_db()
 
@@ -143,8 +119,8 @@ def login(usr: str, passwd: str):
                 return json.dumps({"error": "User credentials are incorrect."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
 
             token_length = 64 # v bitech
-            new_token = b64encode(urandom(int(token_length/8))).decode().replace("=", "") # Pravděpodobnost shody 2**-<token_length>
-            new_valid_until = int(time()) + 1*7*24*60*60 # 1 týden do sekund (platnost 1 týden)
+            new_token = b64encode(urandom(int(token_length/8))).decode().replace("=", "") # Probability of match: 2**-<token_length>
+            new_valid_until = int(time()) + 1*7*24*60*60 # Convert one week (the validity length) to seconds
             
             new_token_pair = {"user": usr, "token": new_token, "valid_until": new_valid_until}
             token_pair_list.append(new_token_pair)
@@ -192,7 +168,7 @@ def unregister(usr: str, passwd: str):
 
 def chpasswd(usr: str, old_passwd:str, new_passwd: str):
     for user in users_list:
-        if user["username"] == usr:# and user["password"] == old_passwd:
+        if user["username"] == usr:
 
             logging.info("bcrypt: Checking password...")
             if checkpw(old_passwd.encode(), user["password"].encode()) == False:
@@ -263,8 +239,8 @@ def save_db_api():
 
 
 
-@app.route("/auth", methods=["POST"])
-def get_auth():
+@app.post("/auth")
+def old_auth():
     return json.dumps({"error": "Endpoint has been obsoleted. Please use /auth/<action>."}, ensure_ascii=ensure_ascii), 410, [("Content-Type", "application/json; charset=utf-8")]
 
 @app.post("/auth/<action>")
@@ -339,7 +315,7 @@ def post_auth(action):
 
 @app.get("/")
 def root():
-    return "This server is currently to be accesed only via the API.", 501 # Todo: odeslat klientský program
+    return "This server is currently to be accesed only via the API.", 501 # Todo: send the client program (when it'll be done)
 
 @app.get("/boards")
 def list_boards():
@@ -445,7 +421,7 @@ def add_on_board(board_name):
         for board in board_list:
             if board["name"] == board_name:
 
-                if new_post["title"]== "": # Pokud je titulek prázdný string
+                if new_post["title"]== "": # If the title is empty string
                     new_post["title"] = "Untitled post"
 
                 if new_post["contents"] == "":
@@ -522,9 +498,9 @@ if treat_ufw:
     logging.info("Adding UFW rule...")
     system(f"sudo ufw allow {port}/tcp")
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=False, port=port) # Pokud debug=True, jakékoli změny do JSON databáze
-                         # se zahodí po ukončení nebo reloadu
-                         # Jednodušší je spouštět debugování skrze VSCode debugger
+    app.run(host="0.0.0.0", debug=False, port=port) # If debug=True, any changes to the JSON DB
+                         # will be discarded after exiting or reload
+                         # It's easier to use VSCode's debugger for Flask
 if treat_ufw:
     logging.info("Deleting UFW rule...")
     system(f"sudo ufw delete allow {port}/tcp")

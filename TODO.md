@@ -1,21 +1,22 @@
 # TODOs
 
-- [x] Přesuň TODO do zvláštního souboru, abys nemusel pořád dělat bordel v commitech
-- [x] Pořeš, když je token potřeba, ale není dán (je vhodné použít error kód 499 nebo 401)
-- [x] Odstraňuj to "=" na konci tokenů
-- [x] Zkus programovat z RPi přes SSH, aby jsi mohl využít výhody Linuxu
-- [x] Příklady pro login/logout
-- [x] ~~Odeslat jen seznam Boardů při `GET /boards`~~ Odeslat počet příspěvků na boardu při `GET /boards` místo jejich listu
-- [x] Přidej `register()`, `underister()`, `chpasswd()` a integruj do endpointu (zatím je to prováděné člověkem)
-- [x] Rozděl `/auth` endpoint na jednotlivé `/auth/<action>`
-- [x] Sepiš dokumentaci
-- [x] Pořeš, když chybí i jiná políčka než token
-- [x] Logování akcí i s uživatelem (zjistíš dle tokenu) a IP
+- [x] Move TODOs to a special file in order to not make mess in the commits
+- [x] Solve, when a token is needed, but not provided (use error code 499 or 401)
+- [x] Remove the "=" at the end of tokens
+- [x] Try programming from RPi via SSH in order to fully utilize Linux' pros
+- [x] Examples for login/logout
+- [x] ~~Send only list of Boards when `GET /boards`~~ Send number of posts on a board when `GET /boards` instead of list of them
+- [x] Add `register()`, `underister()`, `chpasswd()` and integrate into endpoint
+- [x] Split `/auth` endpoint into respective `/auth/<action>`
+- [x] Write documentation
+- [x] Solve, when other variables besides token are missing
+- [x] Log actions with username (you can find out from the token) and IP
 - [x] Hash users' passwords in DB
 - [x] Optimize bcrypt's import
-- [ ] Translate the whole project to English
-- [ ] Remove sample DBs in code
-- [ ] Implementuj oprávnění (zatím lze bez loginu GETovat a s loginem POSTovat i DELETEovat vše)
-- [ ] Sepiš unit testy (kontrola, že jsi nic nerozbil)
-- [ ] Klient
-- [ ] Pořeš načítání celé BBS do paměti (optimalizuj paměť) (možná by to šlo pořešit migrací na SQL)
+- [x] Translate the whole project to English
+- [x] Remove sample DBs in code
+- [ ] Implement permissions (right now you can `GET` everything w/o login and `POST` or `DELETE` w/ login)
+- [ ] Write unit tests (check that nothing's broken)
+- [ ] Prettify/Format the code
+- [ ] Client
+- [ ] Solve loading the whole BBS into RAM - optimalize memory (could be solved by migration onto SQLite)
