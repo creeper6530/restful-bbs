@@ -201,6 +201,25 @@ def get_user_from_token(token: str):
             return token_pair["user"]
     return False # No matching token found
 
+def logout_all(token: str):
+    result = check_token(token)
+    if result != True:
+        return result
+
+    user = get_user_from_token(token)
+
+    tmp_pair_list = token_pair_list.copy() # The copy() function prevents creation of reference to object token_pair_list
+                                           # It is needed in order to prevent the for loop from skipping anything
+    x = 0
+    for token_pair in tmp_pair_list:
+        if token_pair["user"] == user:
+            token_pair_list.remove(token_pair)
+            x += 1
+    del tmp_pair_list # We delete the copy in order to save memory
+    
+    logging.info(f"As per request of {request.remote_addr}, logged out all {x} tokens of {user}.")
+    return int(x)
+
 
 
 
@@ -303,6 +322,18 @@ def post_auth(action):
             if result == True:
                 return "", 204, [("Content-Type", "application/json; charset=utf-8")]
             return result
+        
+        elif action == "logout_all":
+            try: data["token"]
+            except KeyError:
+                logging.warning(f"{request.remote_addr} did not provide enough parameters.")
+                return json.dumps({"error": "Missing parameters."}, ensure_ascii=ensure_ascii), 400, [("Content-Type", "application/json; charset=utf-8")]
+
+            result = logout_all(data["token"])
+            if type(result) is int:
+                return json.dumps({"number": result}, ensure_ascii=ensure_ascii), 200, [("Content-Type", "application/json; charset=utf-8")]
+            return result
+            
 
         else: 
             logging.warning(f"{request.remote_addr} tried an unsupported action.")

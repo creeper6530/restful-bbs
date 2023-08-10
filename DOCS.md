@@ -109,24 +109,24 @@ Returns a list of posts on a board with title, contents, author and ID of post.
 <br>Example response:
 ```json
 [
-    {
-        "title": "Test number 1",
-        "contents": "Rokjsbj",
-        "author": "Administrator",
-        "id": 0
-    },
-    {
-        "title": "Test number 5874",
-        "contents": "vkhdbjs bk",
-        "author": "Administrator",
-        "id": 1
-    },
-    {
-        "title": "LOLZ",
-        "contents": "No contents",
-        "author": "Administrator",
-        "id": 2
-    }
+  {
+    "title": "Test number 1",
+    "contents": "Rokjsbj",
+    "author": "Administrator",
+    "id": 0
+  },
+  {
+    "title": "Test number 5874",
+    "contents": "vkhdbjs bk",
+    "author": "Administrator",
+    "id": 1
+  },
+  {
+    "title": "LOLZ",
+    "contents": "No contents",
+    "author": "Administrator",
+    "id": 2
+  }
 ]
 ```
 
@@ -284,7 +284,7 @@ Returns a token for the user to use.
 <br>Example response:
 ```json
 {
-    "token": "aXQD7WHV3wI"
+  "token": "aXQD7WHV3wI"
 }
 ```
 
@@ -321,6 +321,43 @@ Returns a token for the user to use.
 | 498 INVALID TOKEN (unofficial) | Token provided does not exist. There is nothing to log out. |
 ### Example
 `curl -i http://127.0.0.1:5000/auth/logout -X POST -H 'Content-Type: application/json' -d '{"token":"<add_token_here>"}'` Insertion of a token is required.
+
+## Logout all
+### Endpoint
+`POST /auth/logout_all`
+### Parameters
+<table>
+<tr><td><b> Parameter </td><td><b> Description </td></tr>
+<tr><td> body </td>
+<td>
+
+```json
+{
+  "token": "string"
+}
+```
+
+</td>
+</table>
+
+### Responses
+<table>
+<tr><td><b> Status </td><td><b> Response </td></tr>
+<tr><td> 200 OK </td>
+<td>
+
+Returns a number of tokens logged out.
+<br>Example response:
+```json
+{
+  "number": 3
+}
+```
+
+</td></tr></table>
+
+### Example
+`curl -i http://127.0.0.1:5000/auth/logout_all -X POST -H 'Content-Type: application/json' -d '{"token":"<add_token_here>"}'` Insertion of a token is required.
 
 ## Register
 ### Endpoint

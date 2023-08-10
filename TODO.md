@@ -15,6 +15,7 @@
 - [x] Optimize bcrypt's import
 - [x] Translate the whole project to English
 - [x] Remove sample DBs in code
+- [x] Add `logout_all()` for invalidating all tokens of a certain user
 - [ ] Implement permissions (right now you can `GET` everything w/o login and `POST` or `DELETE` w/ login)
 - [ ] Write unit tests (check that nothing's broken)
 - [ ] Prettify/Format the code
