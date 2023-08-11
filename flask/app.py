@@ -522,6 +522,10 @@ def err_500(error):
     logging.error(f"Internal server error caused by a request from {request.remote_addr}")
     return json.dumps({"error": "Internal server error. Please notify the administrator."}, ensure_ascii=ensure_ascii), 500, [("Content-Type", "application/json; charset=utf-8")]
 
+@app.route('/flask-health-check')
+def flask_health_check():
+	return "success"
+
 
 
 
