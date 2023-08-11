@@ -1,6 +1,7 @@
 services:
   nginx-proxy:
     build: nginx
+    image: localhost:5050/restful-bbs-nginx
     restart: unless-stopped
     volumes:
       - ./nginx/default.conf:/tmp/default.conf
@@ -18,6 +19,7 @@ services:
     command: /app/start.sh
   flask-app:
     build: flask
+    image: localhost:5050/restful-bbs-flask
     restart: unless-stopped
     volumes:
       - ./bbs_data:/home/app/bbs_data
