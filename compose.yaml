@@ -1,6 +1,5 @@
 services:
-  proxy-bbs:
-    container_name: proxy-bbs
+  nginx-proxy:
     build: nginx
     image: localhost:5050/restful-bbs-nginx
     restart: unless-stopped
@@ -20,10 +19,9 @@ services:
     command: /app/start.sh
 
   flask-app:
-    container_name: flask-app
     build: flask
     image: localhost:5050/restful-bbs-flask
-    #restart: unless-stopped
+    restart: unless-stopped
     volumes:
       - ./bbs_data:/home/app/bbs_data
     depends_on:
@@ -36,13 +34,10 @@ services:
     command: /home/nonroot/.local/bin/gunicorn -w 1 -t 60 -b 0.0.0.0:8000 app:app
 
   redis-db:
-    container_name: redis-db
     image: redis/redis-stack:latest
     restart: unless-stopped
     volumes:
       - db-volume:/data
-    environment:
-    - REDIS_ARGS=--save 60 1 --loglevel warning
     ports:
       - "8001:8001"
 
