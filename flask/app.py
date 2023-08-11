@@ -348,6 +348,10 @@ def post_auth(action):
 def root():
     return "This server is currently to be accesed only via the API.", 501 # Todo: send the client program (when it'll be done)
 
+@app.get('/flask-health-check')
+def flask_health_check():
+	return "success"
+
 @app.get("/boards")
 def list_boards():
     postless_board_list = deepcopy(board_list)
@@ -521,10 +525,6 @@ def err_405(error):
 def err_500(error):
     logging.error(f"Internal server error caused by a request from {request.remote_addr}")
     return json.dumps({"error": "Internal server error. Please notify the administrator."}, ensure_ascii=ensure_ascii), 500, [("Content-Type", "application/json; charset=utf-8")]
-
-@app.route('/flask-health-check')
-def flask_health_check():
-	return "success"
 
 
 
