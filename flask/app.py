@@ -1,7 +1,7 @@
 #!/bin/python
 from flask import Flask, request
 import json
-from time import time
+from time import time, sleep
 from os import urandom, name, makedirs, path
 from base64 import b64encode
 from copy import deepcopy
@@ -9,6 +9,7 @@ import logging
 from gzip import open as gzopen
 from shutil import copyfileobj
 from bcrypt import checkpw, gensalt, hashpw
+from redis import Redis
 
 
 
@@ -50,6 +51,14 @@ if treat_ufw: from os import system
 
 
 
+while True:
+    try: db = Redis(host="redis-db", port=6379, decode_responses=True)
+    except: continue
+    else: break
+
+
+
+
 def load_db():
     logging.info("Loading DBs...")
     global board_list
@@ -65,6 +74,8 @@ def load_db():
         print("bbs.json not found. Committing seppuku.")
         exit(1)
 
+    #board_list = db.json().get("bbs", "$")
+
     try:
         with open(f"bbs_data{divider}users.json", "r") as file:
             users_list = json.load(file)
@@ -74,6 +85,8 @@ def load_db():
         print("users.json not found. Committing seppuku.")
         exit(1)
 
+    #users_list = db.json().get("users", "$")
+
     try:
         with open(f"bbs_data{divider}tokens.json", "r") as file:
             token_pair_list = json.load(file)
@@ -82,6 +95,8 @@ def load_db():
         logging.warning("tokens.json not found. Committing seppuku.")
         print("tokens.json not found. Committing seppuku.")
         exit(1)
+
+    #token_pair_list = db.json().get("tokens", "$")
         
     logging.info("Checking token DB...")
     tmp_pair_list = token_pair_list.copy() # The copy() function prevents creation of reference to object token_pair_list
@@ -96,12 +111,15 @@ load_db()
 
 def save_db():
     logging.info("Saving DBs...")
-    with open(f"bbs_data{divider}bbs.json", "w") as file:
-        json.dump(board_list, file, indent=4, ensure_ascii=ensure_ascii)
-    with open(f"bbs_data{divider}users.json", "w") as file:
-        json.dump(users_list, file, indent=4, ensure_ascii=ensure_ascii)
-    with open(f"bbs_data{divider}tokens.json", "w") as file:
-        json.dump(token_pair_list, file, indent=4, ensure_ascii=ensure_ascii)
+    db.json().set("bbs", "$", board_list)
+    #with open(f"bbs_data{divider}bbs.json", "w") as file:
+    #    json.dump(board_list, file, indent=4, ensure_ascii=ensure_ascii)
+    db.json().set("users", "$", users_list)
+    #with open(f"bbs_data{divider}users.json", "w") as file:
+    #    json.dump(users_list, file, indent=4, ensure_ascii=ensure_ascii)    
+    db.json().set("tokens", "$", token_pair_list)
+    #with open(f"bbs_data{divider}tokens.json", "w") as file:
+    #    json.dump(token_pair_list, file, indent=4, ensure_ascii=ensure_ascii)
 
 
 
