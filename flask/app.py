@@ -9,7 +9,6 @@ import logging
 from gzip import open as gzopen
 from shutil import copyfileobj
 from bcrypt import checkpw, gensalt, hashpw
-from redis import Redis
 
 
 
@@ -51,47 +50,58 @@ if treat_ufw: from os import system
 
 
 
-while True:
-    try: db = Redis(host="redis-db", port=6379, decode_responses=True)
-    except: continue
-    else: break
-
-
-
-
 def load_db():
     logging.info("Loading DBs...")
     global board_list
     global users_list
     global token_pair_list
+    
+    try:
+        with open(f"bbs_data{divider}bbs.json", "r") as file:
+            board_list = json.load(file)
 
-    board_list = db.json().get("bbs", "*")
-    db.set("debug1", str(board_list))
-    db.save()
-    users_list = db.json().get("users", "*")
-    db.set("debug1", str(users_list))
-    db.save()
-    token_pair_list = db.json().get("tokens", "*")
-    db.set("debug1", str(token_pair_list))
-    db.save()
+    except FileNotFoundError:
+        logging.warning("bbs.json not found. Committing seppuku.")
+        print("bbs.json not found. Committing seppuku.")
+        exit(1)
+
+    try:
+        with open(f"bbs_data{divider}users.json", "r") as file:
+            users_list = json.load(file)
+
+    except FileNotFoundError:
+        logging.warning("users.json not found. Committing seppuku.")
+        print("users.json not found. Committing seppuku.")
+        exit(1)
+
+    try:
+        with open(f"bbs_data{divider}tokens.json", "r") as file:
+            token_pair_list = json.load(file)
+
+    except FileNotFoundError:
+        logging.warning("tokens.json not found. Committing seppuku.")
+        print("tokens.json not found. Committing seppuku.")
+        exit(1)
         
     logging.info("Checking token DB...")
-    #tmp_pair_list = token_pair_list.copy() # The copy() function prevents creation of reference to object token_pair_list
+    tmp_pair_list = token_pair_list.copy() # The copy() function prevents creation of reference to object token_pair_list
                                            # It is needed in order to prevent the for loop from skipping anything
-    #for token_pair in tmp_pair_list:
-    #    if token_pair["valid_until"] < int(time()):
-    #        logging.debug(f"Found an expired token pair: {json.dumps(token_pair)}")
-    #        token_pair_list.remove(token_pair)
-    #del tmp_pair_list # We delete the copy in order to save memory
+    for token_pair in tmp_pair_list:
+        if token_pair["valid_until"] < int(time()):
+            logging.debug(f"Found an expired token pair: {json.dumps(token_pair)}")
+            token_pair_list.remove(token_pair)
+    del tmp_pair_list # We delete the copy in order to save memory
 
 load_db()
 
 def save_db():
     logging.info("Saving DBs...")
-    db.json().set("bbs", "*", board_list)
-    db.json().set("users", "*", users_list)  
-    db.json().set("tokens", "*", token_pair_list)
-    db.bgsave()
+    with open(f"bbs_data{divider}bbs.json", "w") as file:
+        json.dump(board_list, file, indent=4, ensure_ascii=ensure_ascii)
+    with open(f"bbs_data{divider}users.json", "w") as file:
+        json.dump(users_list, file, indent=4, ensure_ascii=ensure_ascii)
+    with open(f"bbs_data{divider}tokens.json", "w") as file:
+        json.dump(token_pair_list, file, indent=4, ensure_ascii=ensure_ascii)
 
 
 
@@ -99,7 +109,7 @@ def save_db():
 def login(usr: str, passwd: str):
     for user in users_list:
         if user["username"] == usr:
-            if not bool(user["enabled"]):
+            if not user["enabled"]:
                 logging.warning(f"{request.remote_addr} tried to log into disabled user ({usr}).")
                 return json.dumps({"error": "User is disabled."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
 
@@ -177,7 +187,7 @@ def chpasswd(usr: str, old_passwd:str, new_passwd: str):
 def check_token(token: str):
     for token_pair in token_pair_list:
         if token_pair["token"] == token:
-            if int(token_pair["valid_until"]) < int(time()):
+            if token_pair["valid_until"] < int(time()):
                 logout(token_pair["token"])
                 logging.warning(f"{request.remote_addr} tried to use expired token.")
                 return json.dumps({"error": "Token is expired. Please relogin."}, ensure_ascii=ensure_ascii), 440, [("Content-Type", "application/json; charset=utf-8")]
@@ -481,7 +491,7 @@ def delete_post(board_name):
         for board in board_list:
             if board["name"] == board_name:
                 for post in board["posts"]:
-                    if int(post["id"]) == post_to_delete["id"]:
+                    if post["id"] == post_to_delete["id"]:
                         board["posts"].remove(post)
                         logging.info(f"{request.remote_addr} deleted a post ({post_to_delete['name']}) as {get_user_from_token(post_to_delete['token'])}.")
                         return "", 204, [("Content-Type", "application/json; charset=utf-8")]
