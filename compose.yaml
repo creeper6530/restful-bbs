@@ -1,5 +1,6 @@
 services:
-  nginx-proxy:
+  proxy-bbs:
+    container_name: proxy-bbs
     build: nginx
     image: localhost:5050/restful-bbs-nginx
     restart: unless-stopped
@@ -17,15 +18,33 @@ services:
       timeout: 10s
       retries: 3
     command: /app/start.sh
+
   flask-app:
+    container_name: flask-app
     build: flask
     image: localhost:5050/restful-bbs-flask
-    restart: unless-stopped
+    #restart: unless-stopped
     volumes:
       - ./bbs_data:/home/app/bbs_data
+    depends_on:
+      - redis-db
     healthcheck:
       test: ["CMD-SHELL", "curl --silent --fail localhost:8000/flask-health-check || exit 1"]
       interval: 10s
       timeout: 10s
       retries: 3
-    command: /home/nonroot/.local/bin/gunicorn -w 3 -t 60 -b 0.0.0.0:8000 app:app
+    command: /home/nonroot/.local/bin/gunicorn -w 1 -t 60 -b 0.0.0.0:8000 app:app
+
+  redis-db:
+    container_name: redis-db
+    image: redis/redis-stack:latest
+    restart: unless-stopped
+    volumes:
+      - db-volume:/data
+    environment:
+    - REDIS_ARGS=--save 60 1 --loglevel warning
+    ports:
+      - "8001:8001"
+
+volumes:
+  db-volume:
