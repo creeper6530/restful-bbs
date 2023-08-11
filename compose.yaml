@@ -21,10 +21,9 @@ services:
     restart: unless-stopped
     volumes:
       - ./bbs_data:/home/app/bbs_data
-      - ./logs:/home/app/logs
     healthcheck:
       test: ["CMD-SHELL", "curl --silent --fail localhost:8000/flask-health-check || exit 1"]
       interval: 10s
       timeout: 10s
       retries: 3
-    command: gunicorn -w 3 -t 60 -b 0.0.0.0:8000 app:app
+    command: /home/nonroot/.local/bin/gunicorn -w 3 -t 60 -b 0.0.0.0:8000 app:app

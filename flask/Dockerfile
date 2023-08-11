@@ -5,10 +5,10 @@ RUN pip install --upgrade pip
 
 # get curl for healthchecks
 RUN apk add curl
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -o rustup.sh
-RUN chmod +x ./rustup.sh
-RUN ./rustup.sh -y
-ENV PATH="${PATH}:${HOME}/.cargo/bin"
+# RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -o rustup.sh
+# RUN chmod +x ./rustup.sh
+# RUN ./rustup.sh -y
+# ENV PATH="${PATH}:${HOME}/.cargo/bin"
 
 # permissions and nonroot user for tightened security
 RUN adduser -D nonroot
@@ -18,18 +18,13 @@ RUN chown -R nonroot:nonroot /var/log/flask-app
 WORKDIR /home/app
 USER nonroot
 
+# python setup
+COPY --chown=nonroot:nonroot ./requirements.txt /home/app/requirements.txt
+RUN pip install -r requirements.txt
+RUN export FLASK_APP=app.py
+
 # copy all the files to the container
 COPY --chown=nonroot:nonroot . .
-
-# venv
-ENV VIRTUAL_ENV=/home/app/venv
-
-# python setup
-RUN python -m venv $VIRTUAL_ENV
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-RUN export FLASK_APP=app.py
-RUN /home/app/venv/bin/python -m pip install --upgrade pip
-RUN pip install -r requirements.txt
 
 # define the port number the container should expose
 EXPOSE 5000
