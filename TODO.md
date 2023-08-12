@@ -17,9 +17,10 @@
 - [x] Remove sample DBs in code
 - [x] Add `logout_all()` for invalidating all tokens of a certain user
 - [x] Dockerize (put in Docker)
-- [ ] Optimize Dockerization, because now it is a hot mess
+- [x] Optimize Dockerization, because now it is a hot mess
+- [x] Move the BBS savefile from file to Redis
+- [ ] Solve loading the whole BBS into RAM - work directly with Redis w/o loading it to RAM
 - [ ] Implement permissions (right now you can `GET` everything w/o login and `POST` or `DELETE` w/ login)
 - [ ] Write unit tests (check that nothing's broken)
 - [ ] Prettify/Format the code
 - [ ] Client
-- [ ] Solve loading the whole BBS into RAM - optimalize memory (could be solved by migration onto SQLite)

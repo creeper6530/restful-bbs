@@ -1,11 +1,12 @@
-FROM nginx:1.19.7-alpine
+FROM nginx:stable-alpine-slim
 
-# Add bash for boot cmd
+RUN apk add curl
 RUN apk add bash
 
 # Add nginx.conf to container
 COPY --chown=nginx:nginx nginx.conf /etc/nginx/nginx.conf
 COPY --chown=nginx:nginx start.sh /app/start.sh
+COPY --chown=nginx:nginx default.conf /tmp/default.conf
 
 # set workdir
 WORKDIR /app
@@ -28,5 +29,3 @@ RUN touch /var/run/nginx.pid && chown -R nginx:nginx /var/run/nginx.pid
 #     && chmod 644 /var/log/nginx/*log
 
 USER nginx
-
-CMD ["nginx", "-g", "'daemon off;'"]

@@ -4,8 +4,6 @@ services:
     build: nginx
     image: localhost:5050/restful-bbs-nginx
     restart: unless-stopped
-    volumes:
-      - ./nginx/default.conf:/tmp/default.conf
     environment: 
       - FLASK_SERVER_ADDR=flask-app:8000
     ports:
@@ -23,9 +21,7 @@ services:
     container_name: flask-app
     build: flask
     image: localhost:5050/restful-bbs-flask
-    #restart: unless-stopped
-    volumes:
-      - ./bbs_data:/home/app/bbs_data
+    restart: unless-stopped
     depends_on:
       - redis-db
     healthcheck:
@@ -45,6 +41,11 @@ services:
     - REDIS_ARGS=--save 60 1 --loglevel warning
     ports:
       - "8001:8001"
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 3s
+      timeout: 1s
+      retries: 5
 
 volumes:
   db-volume:
