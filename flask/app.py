@@ -9,6 +9,8 @@ import logging
 from gzip import open as gzopen
 from shutil import copyfileobj
 from bcrypt import checkpw, gensalt, hashpw
+from redis import Redis
+from redis.commands.json.path import Path
 
 
 
@@ -41,6 +43,8 @@ logging.info("Starting up...")
 app = Flask(__name__)
 port = 5000
 
+db = Redis(host="redis-db", port=6379, db=0)
+
 ensure_ascii = True
 
 treat_ufw = True
@@ -55,8 +59,42 @@ def load_db():
     global board_list
     global users_list
     global token_pair_list
+
+    i = 0
+    board_list = []
+    while True:
+        board = db.json().get(f"bbs:{i}")
+        if board == None: break
+
+        j = 0
+        posts = []
+        while True:
+            post = db.json().get(f"bbs:{i}:{j}")
+            if post == None: break
+            posts.append(post)
+            j += 1
+        
+        board["posts"] = posts
+        board_list.append(board)
+        i += 1
+
+    i = 0
+    users_list = []
+    while True:
+        user = db.json().get(f"users:{i}")
+        if user == None: break
+        users_list.append(user)
+        i += 1
+
+    i = 0
+    token_pair_list = []
+    while True:
+        token_pair = db.json().get(f"tokens:{i}")
+        if token_pair == None: break
+        token_pair_list.append(token_pair)
+        i += 1
     
-    try:
+    """ try:
         with open(f"bbs_data{divider}bbs.json", "r") as file:
             board_list = json.load(file)
 
@@ -81,7 +119,7 @@ def load_db():
     except FileNotFoundError:
         logging.warning("tokens.json not found. Committing seppuku.")
         print("tokens.json not found. Committing seppuku.")
-        exit(1)
+        exit(1) """
         
     logging.info("Checking token DB...")
     tmp_pair_list = token_pair_list.copy() # The copy() function prevents creation of reference to object token_pair_list
@@ -96,12 +134,29 @@ load_db()
 
 def save_db():
     logging.info("Saving DBs...")
-    with open(f"bbs_data{divider}bbs.json", "w") as file:
+
+    tmp_board_list = deepcopy(board_list)
+
+    for i, board in enumerate(tmp_board_list):
+        for j, post in enumerate(board["posts"]):
+            db.json().set(f"bbs:{i}:{j}", Path.root_path(), post)
+        del board["posts"]
+        db.json().set(f"bbs:{i}", Path.root_path(), board)
+    
+    for i, user in enumerate(users_list):
+        db.json().set(f"users:{i}", Path.root_path(), user)
+
+    for i, token in enumerate(token_pair_list):
+        db.json().set(f"tokens:{i}", Path.root_path(), token)
+
+    """ with open(f"bbs_data{divider}bbs.json", "w") as file:
         json.dump(board_list, file, indent=4, ensure_ascii=ensure_ascii)
     with open(f"bbs_data{divider}users.json", "w") as file:
         json.dump(users_list, file, indent=4, ensure_ascii=ensure_ascii)
     with open(f"bbs_data{divider}tokens.json", "w") as file:
-        json.dump(token_pair_list, file, indent=4, ensure_ascii=ensure_ascii)
+        json.dump(token_pair_list, file, indent=4, ensure_ascii=ensure_ascii) """
+
+save_db()
 
 
 
