@@ -22,14 +22,14 @@ elif name == "posix":
 else: raise NotImplementedError
 
 try:
-    with open(f"logs{divider}lastest.log", "r") as old_log:
+    with open(f"logs{divider}latest.log", "r") as old_log:
         datetime = old_log.read(19)
     datetime = datetime.replace(" ", "_")
     datetime = datetime.replace(".", "_")
     datetime = datetime.replace(":", "_")
 
         
-    with open(f"logs{divider}lastest.log", "rb") as f_in:
+    with open(f"logs{divider}latest.log", "rb") as f_in:
         with gzopen(f"logs{divider}{datetime}.log.gz", "wb") as f_out:
             copyfileobj(f_in, f_out)
 except FileNotFoundError: pass
@@ -37,7 +37,7 @@ except FileNotFoundError: pass
 if not path.exists("logs"):
     makedirs("logs")
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%d.%m.%Y %H:%M:%S', filename=f"logs{divider}lastest.log", filemode="w")
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%d.%m.%Y %H:%M:%S', filename=f"logs{divider}latest.log", filemode="w")
 logging.info("Starting up...")
 
 app = Flask(__name__)
@@ -519,7 +519,7 @@ def add_on_board(board_name):
 
                 new_post["id"] = len(board["posts"])
                 board["posts"].append(new_post)
-                logging.info(f"{request.remote_addr} created a post ({new_post['name']}) as {get_user_from_token(used_token)}.")
+                logging.info(f"{request.remote_addr} created a post ({new_post['title']}) as {get_user_from_token(used_token)}.")
                 return "", 204, [("Content-Type", "application/json; charset=utf-8")]
             
         logging.warning(f"{request.remote_addr} tried to access non-existent board.")
