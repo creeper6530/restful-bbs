@@ -1,43 +1,37 @@
 #!/bin/python
-from flask import Flask, request
 import json
-from time import time
-from os import urandom, name, makedirs, path
+import logging
 from base64 import b64encode
 from copy import deepcopy
-import logging
 from gzip import open as gzopen
+from os import makedirs, path, urandom
 from shutil import copyfileobj
+from time import time
+
 from bcrypt import checkpw, gensalt, hashpw
 from redis import Redis
 from redis.commands.json.path import Path
+from flask import Flask, request
 
 
 
-
-if name == "nt":
-    divider = "\\"
-elif name == "posix":
-    divider = "/"
-else: raise NotImplementedError
 
 try:
-    with open(f"logs{divider}latest.log", "r") as old_log:
+    with open("logs/latest.log", "r") as old_log:
         datetime = old_log.read(19)
     datetime = datetime.replace(" ", "_")
     datetime = datetime.replace(".", "_")
     datetime = datetime.replace(":", "_")
-
-        
-    with open(f"logs{divider}latest.log", "rb") as f_in:
-        with gzopen(f"logs{divider}{datetime}.log.gz", "wb") as f_out:
+    
+    with open("logs/latest.log", "rb") as f_in:
+        with gzopen(f"logs/{datetime}.log.gz", "wb") as f_out:
             copyfileobj(f_in, f_out)
 except FileNotFoundError: pass
 
 if not path.exists("logs"):
     makedirs("logs")
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%d.%m.%Y %H:%M:%S', filename=f"logs{divider}latest.log", filemode="w")
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%d.%m.%Y %H:%M:%S', filename="logs/latest.log", filemode="w")
 logging.info("Starting up...")
 
 app = Flask(__name__)
@@ -46,10 +40,6 @@ port = 5000
 db = Redis(host="redis-db", port=6379, db=0)
 
 ensure_ascii = True
-
-treat_ufw = True
-if name == "nt": treat_ufw = False # UFW does not exist on Windows
-if treat_ufw: from os import system
 
 
 
@@ -94,33 +84,6 @@ def load_db():
         token_pair_list.append(token_pair)
         i += 1
     
-    """ try:
-        with open(f"bbs_data{divider}bbs.json", "r") as file:
-            board_list = json.load(file)
-
-    except FileNotFoundError:
-        logging.warning("bbs.json not found. Committing seppuku.")
-        print("bbs.json not found. Committing seppuku.")
-        exit(1)
-
-    try:
-        with open(f"bbs_data{divider}users.json", "r") as file:
-            users_list = json.load(file)
-
-    except FileNotFoundError:
-        logging.warning("users.json not found. Committing seppuku.")
-        print("users.json not found. Committing seppuku.")
-        exit(1)
-
-    try:
-        with open(f"bbs_data{divider}tokens.json", "r") as file:
-            token_pair_list = json.load(file)
-
-    except FileNotFoundError:
-        logging.warning("tokens.json not found. Committing seppuku.")
-        print("tokens.json not found. Committing seppuku.")
-        exit(1) """
-        
     logging.info("Checking token DB...")
     tmp_pair_list = token_pair_list.copy() # The copy() function prevents creation of reference to object token_pair_list
                                            # It is needed in order to prevent the for loop from skipping anything
@@ -151,13 +114,6 @@ def save_db():
         db.json().set(f"tokens:{i}", Path.root_path(), token)
 
     db.save() # Redis also needs to save to disk
-
-    """ with open(f"bbs_data{divider}bbs.json", "w") as file:
-        json.dump(board_list, file, indent=4, ensure_ascii=ensure_ascii)
-    with open(f"bbs_data{divider}users.json", "w") as file:
-        json.dump(users_list, file, indent=4, ensure_ascii=ensure_ascii)
-    with open(f"bbs_data{divider}tokens.json", "w") as file:
-        json.dump(token_pair_list, file, indent=4, ensure_ascii=ensure_ascii) """
 
 save_db()
 
@@ -587,16 +543,10 @@ def err_500(error):
 
 
 
-if treat_ufw:
-    logging.info("Adding UFW rule...")
-    system(f"sudo ufw allow {port}/tcp")
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=False, port=port) # If debug=True, any changes to the JSON DB
                          # will be discarded after exiting or reload
                          # It's easier to use VSCode's debugger for Flask
-if treat_ufw:
-    logging.info("Deleting UFW rule...")
-    system(f"sudo ufw delete allow {port}/tcp")
 
 save_db()
 logging.info("Quitting...")
