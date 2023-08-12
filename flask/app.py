@@ -135,8 +135,9 @@ load_db()
 def save_db():
     logging.info("Saving DBs...")
 
-    tmp_board_list = deepcopy(board_list)
+    db.flushdb(asynchronous=False) # Flushes the DB to account for removed items
 
+    tmp_board_list = deepcopy(board_list)
     for i, board in enumerate(tmp_board_list):
         for j, post in enumerate(board["posts"]):
             db.json().set(f"bbs:{i}:{j}", Path.root_path(), post)
@@ -148,6 +149,8 @@ def save_db():
 
     for i, token in enumerate(token_pair_list):
         db.json().set(f"tokens:{i}", Path.root_path(), token)
+
+    db.save() # Redis also needs to save to disk
 
     """ with open(f"bbs_data{divider}bbs.json", "w") as file:
         json.dump(board_list, file, indent=4, ensure_ascii=ensure_ascii)
