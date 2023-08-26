@@ -4,7 +4,7 @@ import logging
 from base64 import b64encode
 from copy import deepcopy
 from gzip import open as gzopen
-from os import makedirs, path, urandom
+from os import makedirs, path, urandom, environ
 from shutil import copyfileobj
 from time import time
 
@@ -37,7 +37,13 @@ logging.info("Starting up...")
 app = Flask(__name__)
 port = 5000
 
-db = Redis(host="redis-db", port=6379, db=0)
+
+
+
+IsDocker = environ.get("IS_IN_DOCKER", False)
+
+if IsDocker: db = Redis(host="redis-db", port=6379, db=0)
+else: db = Redis(host="127.0.0.1", port=6379, db=0)
 
 ensure_ascii = True
 

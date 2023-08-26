@@ -29,4 +29,7 @@ COPY --chown=nonroot:nonroot . .
 # define the port number the container should expose
 EXPOSE 5000
 
+# used to detect whether Python's running in Docker
+ENV IS_IN_DOCKER=True
+
 CMD ["python", "app.py"]
