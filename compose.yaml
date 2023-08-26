@@ -36,7 +36,7 @@ services:
     image: redis/redis-stack:latest
     restart: unless-stopped
     volumes:
-      - db-volume:/data
+      - ./data:/data
     environment:
     - REDIS_ARGS=--save 60 1 --loglevel warning
     ports:
