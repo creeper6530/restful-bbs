@@ -2,7 +2,7 @@ services:
   proxy-bbs:
     container_name: proxy-bbs
     build: nginx
-    image: restful-bbs-nginx
+    image: localhost:5050/restful-bbs-nginx
     restart: unless-stopped
     environment: 
       - FLASK_SERVER_ADDR=flask-app:8000
@@ -20,7 +20,7 @@ services:
   flask-app:
     container_name: flask-app
     build: flask
-    image: restful-bbs-flask
+    image: localhost:5050/restful-bbs-flask
     restart: unless-stopped
     depends_on:
       - redis-db
