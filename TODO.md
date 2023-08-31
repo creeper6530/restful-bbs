@@ -20,6 +20,7 @@
 - [x] Optimize Dockerization, because now it is a hot mess
 - [x] Move the BBS savefile from file to Redis
 - [ ] Solve loading the whole BBS into RAM - work directly with Redis w/o loading it to RAM
+- [ ] Test more Gunicorn workers after implementing previous point
 - [ ] Implement permissions (right now you can `GET` everything w/o login and `POST` or `DELETE` w/ login)
 - [ ] Write unit tests (check that nothing's broken)
 - [ ] Prettify/Format the code
