@@ -127,7 +127,11 @@ save_db()
 
 
 def login(usr: str, passwd: str):
-    for user in users_list:
+    i = 0
+    while True:
+        user = db.json().get(f"users:{i}")
+        if user == None: break
+    #for user in users_list:
         if user["username"] == usr:
             if not user["enabled"]:
                 logging.warning(f"{request.remote_addr} tried to log into disabled user ({usr}).")
@@ -143,9 +147,20 @@ def login(usr: str, passwd: str):
             new_valid_until = int(time()) + 1*7*24*60*60 # Convert one week (the validity length) to seconds
             
             new_token_pair = {"user": usr, "token": new_token, "valid_until": new_valid_until}
-            token_pair_list.append(new_token_pair)
+            #token_pair_list.append(new_token_pair)
+            j = 0
+            while True:
+                data = db.json().get(f"tokens:{j}")
+                if data != None: 
+                    j += 1
+                    continue
+                db.json().set(f"tokens:{j}", Path.root_path(), new_token_pair)
+                break
+            
             logging.info(f"{request.remote_addr} logged in as {user['username']}.")
             return new_token.encode()
+        
+        i += 1
     logging.warning(f"{request.remote_addr} tried to log in with invalid username ({usr}; {passwd}).")
     return json.dumps({"error": "User credentials are incorrect."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
 
