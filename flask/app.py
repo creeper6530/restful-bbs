@@ -271,6 +271,8 @@ def check_token(token: str):
                 logging.warning(f"{request.remote_addr} tried to use expired token.")
                 return json.dumps({"error": "Token is expired. Please relogin."}, ensure_ascii=ensure_ascii), 440, [("Content-Type", "application/json; charset=utf-8")]
             return True
+        
+        i += 1
     logging.warning(f"{request.remote_addr} tried to use non-existent token.")
     return json.dumps({"error": "Token not found. Please relogin."}, ensure_ascii=ensure_ascii), 498, [("Content-Type", "application/json; charset=utf-8")]
 
@@ -282,6 +284,8 @@ def get_user_from_token(token: str):
     #for token_pair in token_pair_list:
         if token_pair["token"] == token:
             return token_pair["user"]
+        
+        i += 1
     return False # No matching token found
 
 def logout_all(token: str):
@@ -291,14 +295,24 @@ def logout_all(token: str):
 
     user = get_user_from_token(token)
 
-    tmp_pair_list = token_pair_list.copy() # The copy() function prevents creation of reference to object token_pair_list
+    ''' tmp_pair_list = token_pair_list.copy() # The copy() function prevents creation of reference to object token_pair_list
                                            # It is needed in order to prevent the for loop from skipping anything
     x = 0
     for token_pair in tmp_pair_list:
         if token_pair["user"] == user:
             token_pair_list.remove(token_pair)
             x += 1
-    del tmp_pair_list # We delete the copy in order to save memory
+    del tmp_pair_list # We delete the copy in order to save memory '''
+
+    i = 0
+    x = 0
+    while True:
+        token_pair = db.json().get(f"tokens:{i}")
+        if token_pair == None: break
+        if token_pair["user"] == user:
+            db.delete(f"tokens:{i}")
+            x += 1
+        i += 1
     
     logging.info(f"As per request of {request.remote_addr}, logged out all {x} tokens of {user}.")
     return int(x)
