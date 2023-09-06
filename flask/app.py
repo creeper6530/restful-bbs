@@ -165,11 +165,19 @@ def login(usr: str, passwd: str):
     return json.dumps({"error": "User credentials are incorrect."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
 
 def logout(token: str):
-    for token_pair in token_pair_list:
+    i = 0
+    while True:
+        token_pair = db.json().get(f"tokens:{i}")
+        if token_pair == None: break
+    #for token_pair in token_pair_list:
         if token_pair["token"] == token:
-            token_pair_list.remove(token_pair)
+            db.delete(f"tokens:{i}")
+            #token_pair_list.remove(token_pair)
+
             logging.info(f"{request.remote_addr} logged out {token_pair['user']}.")
             return True
+        
+        i += 1
     return json.dumps({"error": "Token not found."}, ensure_ascii=ensure_ascii), 498, [("Content-Type", "application/json; charset=utf-8")]
 
 def register(usr: str, passwd: str):
