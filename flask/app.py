@@ -234,7 +234,11 @@ def unregister(usr: str, passwd: str):
     return json.dumps({"error": "User with designed credentials not found."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
 
 def chpasswd(usr: str, old_passwd:str, new_passwd: str):
-    for user in users_list:
+    i = 0
+    while True:
+        user = db.json().get(f"users:{i}")
+        if user == None: break
+    #for user in users_list:
         if user["username"] == usr:
 
             logging.info("bcrypt: Checking password...")
@@ -245,9 +249,13 @@ def chpasswd(usr: str, old_passwd:str, new_passwd: str):
             logging.info("bcrypt: Generating salt...")
             salt = gensalt()
 
-            user["password"] = hashpw(new_passwd.encode(), salt).decode()
+            db.json().set(f"users:{i}", ".password", hashpw(new_passwd.encode(), salt).decode())
+            #user["password"] = hashpw(new_passwd.encode(), salt).decode()
+
             logging.info(f"{request.remote_addr} changed password for {usr}.")
             return True
+
+        i += 1
     logging.warning(f"{request.remote_addr} tried to change password with invalid username ({usr}; {old_passwd}; {new_passwd}).")
     return json.dumps({"error": "User with designed credentials not found."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
 
