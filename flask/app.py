@@ -260,7 +260,11 @@ def chpasswd(usr: str, old_passwd:str, new_passwd: str):
     return json.dumps({"error": "User with designed credentials not found."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
 
 def check_token(token: str):
-    for token_pair in token_pair_list:
+    i = 0
+    while True:
+        token_pair = db.json().get(f"tokens:{i}")
+        if token_pair == None: break
+    #for token_pair in token_pair_list:
         if token_pair["token"] == token:
             if token_pair["valid_until"] < int(time()):
                 logout(token_pair["token"])
@@ -271,7 +275,11 @@ def check_token(token: str):
     return json.dumps({"error": "Token not found. Please relogin."}, ensure_ascii=ensure_ascii), 498, [("Content-Type", "application/json; charset=utf-8")]
 
 def get_user_from_token(token: str):
-    for token_pair in token_pair_list:
+    i = 0
+    while True:
+        token_pair = db.json().get(f"tokens:{i}")
+        if token_pair == None: break
+    #for token_pair in token_pair_list:
         if token_pair["token"] == token:
             return token_pair["user"]
     return False # No matching token found
