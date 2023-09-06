@@ -181,16 +181,32 @@ def logout(token: str):
     return json.dumps({"error": "Token not found."}, ensure_ascii=ensure_ascii), 498, [("Content-Type", "application/json; charset=utf-8")]
 
 def register(usr: str, passwd: str):
-    for user in users_list:
+    i = 0
+    while True:
+        user = db.json().get(f"users:{i}")
+        if user == None: break
+    #for user in users_list:
         if user["username"] == usr:
             logging.warning(f"{request.remote_addr} tried to register already existing user ({usr}).")
             return json.dumps({"error": "User with designed username already exists."}, ensure_ascii=ensure_ascii), 409, [("Content-Type", "application/json; charset=utf-8")]
+        
+        i += 1
     logging.info("bcrypt: Generating salt...")
     salt = gensalt()
+    logging.info("bcrypt: Hashing password...")
     hashed_passwd = hashpw(passwd.encode(), salt).decode()
     
     new_user = {"username": usr, "password": hashed_passwd, "enabled": True}
-    users_list.append(new_user)
+    #users_list.append(new_user)
+    j = 0
+    while True:
+        data = db.json().get(f"users:{j}")
+        if data != None: 
+            j += 1
+            continue
+        db.json().set(f"users:{j}", Path.root_path(), new_user)
+        break
+
     logging.info(f"{request.remote_addr} registered as {usr}.")
     return True
 
