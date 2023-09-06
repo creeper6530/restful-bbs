@@ -211,7 +211,11 @@ def register(usr: str, passwd: str):
     return True
 
 def unregister(usr: str, passwd: str):
-    for user in users_list:
+    i = 0
+    while True:
+        user = db.json().get(f"users:{i}")
+        if user == None: break
+    #for user in users_list:
         if user["username"] == usr:
             
             logging.info("bcrypt: Checking password...")
@@ -219,9 +223,13 @@ def unregister(usr: str, passwd: str):
                 logging.warning(f"{request.remote_addr} tried to unregister with invalid password ({usr}; {passwd}).")
                 return json.dumps({"error": "User with designed credentials not found."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
 
-            users_list.remove(user)
+            db.delete(f"users:{i}")
+            #users_list.remove(user)
+
             logging.info(f"{request.remote_addr} unregistered {usr}.")
             return True
+        
+        i += 1
     logging.warning(f"{request.remote_addr} tried to unregister with invalid username ({usr}; {passwd}).")
     return json.dumps({"error": "User with designed credentials not found."}, ensure_ascii=ensure_ascii), 401, [("Content-Type", "application/json; charset=utf-8")]
 
