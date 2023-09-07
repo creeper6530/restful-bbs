@@ -20,7 +20,10 @@
 - [x] Optimize Dockerization, because now it is a hot mess
 - [x] Move the BBS savefile from file to Redis
 - [ ] Solve loading the whole BBS into RAM - work directly with Redis w/o loading it to RAM
-- [ ] Test more Gunicorn workers after implementing previous point
+- [ ] Theoretically, it's possible to encounter problems when deleting board that's not the last board in the DB. <br>
+Example: It is possible to arrange the DB into this state: `bbs:0 bbs:1 bbs:3` by deleting `bbs:2`. <br>
+This could cause duplicate boards / users. Solve it by shifting all keys with index > current working index.
+- [ ] Test more Gunicorn workers
 - [ ] Implement permissions (right now you can `GET` everything w/o login and `POST` or `DELETE` w/ login)
 - [ ] Write unit tests (check that nothing's broken)
 - [ ] Prettify/Format the code
