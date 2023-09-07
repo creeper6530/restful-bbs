@@ -9,7 +9,7 @@ from shutil import copyfileobj
 from time import time
 
 from bcrypt import checkpw, gensalt, hashpw
-from redis import Redis
+from redis import Redis, exceptions
 from redis.commands.json.path import Path
 from flask import Flask, request
 
@@ -119,7 +119,8 @@ def save_db():
     for i, token in enumerate(token_pair_list):
         db.json().set(f"tokens:{i}", Path.root_path(), token)
 
-    db.save() # Redis also needs to save to disk
+    try: db.save() # Redis also needs to save to disk
+    except exceptions.ResponseError: pass # Happens when tries to save when another save is in progress
 
 save_db()
 
@@ -494,8 +495,16 @@ def add_board():
                 logging.warning(f"{request.remote_addr} tried to create an existing board.")
                 return json.dumps({"error": "Board with designed name already exists."}, ensure_ascii=ensure_ascii), 409, [("Content-Type", "application/json; charset=utf-8")]
 
-        new_board["posts"] = []
-        board_list.append(new_board)
+        j = 0
+        while True:
+            data = db.json().get(f"bbs:{j}")
+            if data == None:
+                db.json().set(f"bbs:{j}", Path.root_path(), new_board)
+                break
+            j += 1
+        #new_board["posts"] = []
+        #board_list.append(new_board)
+
         logging.info(f"{request.remote_addr} created a board ({new_board['name']}) as {get_user_from_token(used_token)}.")
         return "", 204, [("Content-Type", "application/json; charset=utf-8")]
     
