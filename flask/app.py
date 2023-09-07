@@ -451,11 +451,20 @@ def flask_health_check():
 
 @app.get("/boards")
 def list_boards():
-    postless_board_list = deepcopy(board_list)
-    for board in postless_board_list:
-        board["posts"] = len(board["posts"])
+    board_list = []
+    i = 0
+    while True:
+        board = db.json().get(f"bbs:{i}")
+        if board == None: break
+        board["posts"] = len(db.keys(f"bbs:{i}:*"))
+        board_list.append(board)
+        i += 1
+    #postless_board_list = deepcopy(board_list)
 
-    return json.dumps(postless_board_list, ensure_ascii=ensure_ascii), 200, [("Content-Type", "application/json; charset=utf-8")]
+    #for board in postless_board_list:
+    #    board["posts"] = len(board["posts"])
+
+    return json.dumps(board_list, ensure_ascii=ensure_ascii), 200, [("Content-Type", "application/json; charset=utf-8")]
 
 @app.post("/boards")
 def add_board():
