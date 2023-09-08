@@ -547,9 +547,23 @@ def delete_board():
 
 @app.get("/boards/<board_name>")
 def posts_on_board(board_name):
-    for board in board_list:
+    i = 0
+    while True:
+        board = db.json().get(f"bbs:{i}")
+        if board == None: break
+    #for board in board_list:
         if board["name"] == board_name:
-            return json.dumps(board["posts"], ensure_ascii=ensure_ascii), 200, [("Content-Type", "application/json; charset=utf-8")]
+            posts = []
+            j = 0
+            while True:
+                post = db.json().get(f"bbs:{i}:{j}")
+                if post == None: break
+                posts.append(post)
+                j += 1
+
+            return json.dumps(posts, ensure_ascii=ensure_ascii), 200, [("Content-Type", "application/json; charset=utf-8")]
+        
+        i += 1
         
     logging.warning(f"{request.remote_addr} tried to access non-existent board.")     
     return json.dumps({"error": "Board not found."}, ensure_ascii=ensure_ascii), 404, [("Content-Type", "application/json; charset=utf-8")]
