@@ -24,6 +24,7 @@
 Example: It is possible to arrange the DB into this state: `bbs:0 bbs:1 bbs:3 bbs:4` by deleting `bbs:2`. <br>
 This could cause duplicate boards / users (because the BBS wouldn't acknowledge the presence of `bbs:3` and `bbs:4` because it would get `None` for `bbs:2`). <br>
 Solve it by shifting all keys with index > current working index (shifting `bbs:3` back to `bbs:2` and `bbs:4` to `bbs:3`).
+- [ ] Learn how to return multiple keys by Redis (remove the `while` loops)
 - [ ] Test more Gunicorn workers
 - [ ] Implement permissions (right now you can `GET` everything w/o login and `POST` or `DELETE` w/ login)
 - [ ] Write unit tests (check that nothing's broken)
