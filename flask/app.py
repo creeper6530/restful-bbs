@@ -527,11 +527,19 @@ def delete_board():
         if result != True:
             return result
 
-        for board in board_list:
+        i = 0
+        while True:
+            board = db.json().get(f"bbs:{i}")
+            if board == None: break
+        #for board in board_list:
             if board["name"] == board_to_delete["name"]:
-                board_list.remove(board)
+                db.delete(f"bbs:{i}")
+                #board_list.remove(board)
+
                 logging.info(f"{request.remote_addr} deleted a board ({board_to_delete['name']}) as {get_user_from_token(board_to_delete['token'])}.")
                 return "", 204, [("Content-Type", "application/json; charset=utf-8")]
+            
+            i += 1
             
         logging.warning(f"{request.remote_addr} tried to access non-existent board.")    
         return json.dumps({"error": "Board does not exist."}, ensure_ascii=ensure_ascii), 404, [("Content-Type", "application/json; charset=utf-8")]
