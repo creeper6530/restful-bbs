@@ -590,7 +590,11 @@ def add_on_board(board_name):
         new_post.pop("token")
 
         
-        for board in board_list:
+        i = 0
+        while True:
+            board = db.json().get(f"bbs:{i}")
+            if board == None: break
+        #for board in board_list:
             if board["name"] == board_name:
 
                 if new_post["title"]== "": # If the title is empty string
@@ -599,10 +603,22 @@ def add_on_board(board_name):
                 if new_post["contents"] == "":
                     new_post["contents"] = "No contents"
 
-                new_post["id"] = len(board["posts"])
-                board["posts"].append(new_post)
+                new_post["id"] = len(db.keys(f"bbs:{i}:*"))
+                #new_post["id"] = len(board["posts"])
+
+                j = 0
+                while True:
+                    data = db.json().get(f"bbs:{i}:{j}")
+                    if data == None:
+                        db.json().set(f"bbs:{i}:{j}", Path.root_path(), new_post)
+                        break
+                    j += 1
+                #board["posts"].append(new_post)
+
                 logging.info(f"{request.remote_addr} created a post ({new_post['title']}) as {get_user_from_token(used_token)}.")
                 return "", 204, [("Content-Type", "application/json; charset=utf-8")]
+            
+            i += 1
             
         logging.warning(f"{request.remote_addr} tried to access non-existent board.")
         return json.dumps({"error": "Board does not exist."}, ensure_ascii=ensure_ascii, separators=(',', ':')), 404, [("Content-Type", "application/json; charset=utf-8")]    
