@@ -19,7 +19,7 @@
 - [x] Dockerize (put in Docker)
 - [x] Optimize Dockerization, because now it is a hot mess
 - [x] Move the BBS savefile from file to Redis
-- [ ] Solve loading the whole BBS into RAM - work directly with Redis w/o loading it to RAM
+- [x] Solve loading the whole BBS into RAM - work directly with Redis w/o loading it to RAM
 - [ ] Theoretically, it's possible to encounter problems when deleting board that's not the last board in the DB. <br>
 Example: It is possible to arrange the DB into this state: `bbs:0 bbs:1 bbs:3 bbs:4` by deleting `bbs:2`. <br>
 This could cause duplicate boards / users (because the BBS wouldn't acknowledge the presence of `bbs:3` and `bbs:4` because it would get `None` for `bbs:2`). <br>
