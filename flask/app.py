@@ -697,9 +697,7 @@ def err_500(error):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=False, port=port) # If debug=True, any changes to the JSON DB
-                         # will be discarded after exiting or reload
-                         # It's easier to use VSCode's debugger for Flask
+    app.run(host="0.0.0.0", debug=False, port=port)
 
 save_db()
 logging.info("Quitting...")
