@@ -50,83 +50,6 @@ ensure_ascii = True
 
 
 
-def load_db():
-    logging.info("Loading DBs...")
-    global board_list
-    global users_list
-    global token_pair_list
-
-    i = 0
-    board_list = []
-    while True:
-        board = db.json().get(f"bbs:{i}")
-        if board == None: break
-
-        j = 0
-        posts = []
-        while True:
-            post = db.json().get(f"bbs:{i}:{j}")
-            if post == None: break
-            posts.append(post)
-            j += 1
-        
-        board["posts"] = posts
-        board_list.append(board)
-        i += 1
-
-    i = 0
-    users_list = []
-    while True:
-        user = db.json().get(f"users:{i}")
-        if user == None: break
-        users_list.append(user)
-        i += 1
-
-    i = 0
-    token_pair_list = []
-    while True:
-        token_pair = db.json().get(f"tokens:{i}")
-        if token_pair == None: break
-        token_pair_list.append(token_pair)
-        i += 1
-    
-    logging.info("Checking token DB...")
-    tmp_pair_list = token_pair_list.copy() # The copy() function prevents creation of reference to object token_pair_list
-                                           # It is needed in order to prevent the for loop from skipping anything
-    for token_pair in tmp_pair_list:
-        if token_pair["valid_until"] < int(time()):
-            logging.debug(f"Found an expired token pair: {json.dumps(token_pair, separators=(',', ':'))}")
-            token_pair_list.remove(token_pair)
-    del tmp_pair_list # We delete the copy in order to save memory
-
-load_db()
-
-def save_db():
-    logging.info("Saving DBs...")
-
-    db.flushdb(asynchronous=False) # Flushes the DB to account for removed items
-
-    tmp_board_list = deepcopy(board_list)
-    for i, board in enumerate(tmp_board_list):
-        for j, post in enumerate(board["posts"]):
-            db.json().set(f"bbs:{i}:{j}", Path.root_path(), post)
-        del board["posts"]
-        db.json().set(f"bbs:{i}", Path.root_path(), board)
-    
-    for i, user in enumerate(users_list):
-        db.json().set(f"users:{i}", Path.root_path(), user)
-
-    for i, token in enumerate(token_pair_list):
-        db.json().set(f"tokens:{i}", Path.root_path(), token)
-
-    try: db.save() # Redis also needs to save to disk
-    except exceptions.ResponseError: pass # Happens when tries to save when another save is in progress
-
-save_db()
-
-
-
-
 def login(usr: str, passwd: str):
     i = 0
     while True:
@@ -321,41 +244,6 @@ def logout_all(token: str):
 
 
 
-@app.post("/reload")
-def reload_db():
-    if request.is_json:
-        data = request.get_json()
-
-        try: result = check_token(data["token"])
-        except KeyError:
-            logging.warning(f"{request.remote_addr} did not provide a token.")
-            return json.dumps({"error": "Token not provided."}, ensure_ascii=ensure_ascii, separators=(',', ':')), 401, [("Content-Type", "application/json; charset=utf-8")]
-        if result != True:
-            return result
-
-        load_db()
-        return "", 204, [("Content-Type", "application/json; charset=utf-8")]
-    return json.dumps({"error": "Request must be JSON."}, ensure_ascii=ensure_ascii, separators=(',', ':')), 415, [("Content-Type", "application/json; charset=utf-8")]
-
-@app.post("/save")
-def save_db_api():
-    if request.is_json:
-        data = request.get_json()
-
-        try: result = check_token(data["token"])
-        except KeyError:
-            logging.warning(f"{request.remote_addr} did not provide a token.")
-            return json.dumps({"error": "Token not provided."}, ensure_ascii=ensure_ascii, separators=(',', ':')), 401, [("Content-Type", "application/json; charset=utf-8")]
-        if result != True:
-            return result
-
-        save_db()
-        return "", 204, [("Content-Type", "application/json; charset=utf-8")]
-    return json.dumps({"error": "Request must be JSON."}, ensure_ascii=ensure_ascii, separators=(',', ':')), 415, [("Content-Type", "application/json; charset=utf-8")]
-
-
-
-
 @app.post("/auth")
 def old_auth():
     return json.dumps({"error": "Endpoint has been obsoleted. Please use /auth/<action>."}, ensure_ascii=ensure_ascii, separators=(',', ':')), 410, [("Content-Type", "application/json; charset=utf-8")]
@@ -490,10 +378,16 @@ def add_board():
             logging.warning(f"{request.remote_addr} tried to create a board with invalid name.")
             return json.dumps({"error": "Board name must be alphanumeric (A-Z, a-z, 0-9)."}, separators=(',', ':')), 400, [("Content-Type", "application/json; charset=utf-8")]
 
-        for board in board_list:
+        i = 0
+        while True:
+            board = db.json().get(f"bbs:{i}")
+            if board == None: break
+        #for board in board_list:
             if board["name"] == new_board["name"]:
                 logging.warning(f"{request.remote_addr} tried to create an existing board.")
                 return json.dumps({"error": "Board with designed name already exists."}, ensure_ascii=ensure_ascii, separators=(',', ':')), 409, [("Content-Type", "application/json; charset=utf-8")]
+            
+            i += 1
 
         j = 0
         while True:
@@ -699,5 +593,4 @@ def err_500(error):
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=False, port=port)
 
-save_db()
 logging.info("Quitting...")
