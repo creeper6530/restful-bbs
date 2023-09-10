@@ -576,29 +576,25 @@ def delete_post(board_name):
             if board == None: break
         #for board in board_list:
             if board["name"] == board_name:
-                j = 0
-                while True:
-                    post = db.json().get(f"bbs:{i}:{j}")
-                    if post == None: break
-                #for post in board["posts"]:
-                    if post["id"] == post_to_delete["id"]:
-                        db.delete(f"bbs:{i}:{j}")
-                        j += 1
-                        while True:
-                            post_2 = db.json().get(f"bbs:{i}:{j}")
-                            if post_2 == None: break
-                            db.renamenx(f"bbs:{i}:{j}", f"bbs:{i}:{j-1}")
-                            db.json().set(f"bbs:{i}:{j-1}", ".id", j-1)
-                            j += 1
-                        #board["posts"].remove(post)
+                j = post_to_delete["id"]
 
-                        logging.info(f"{request.remote_addr} deleted a post ({post['title']}) as {get_user_from_token(post_to_delete['token'])}.")
-                        return "", 204, [("Content-Type", "application/json; charset=utf-8")]
-                    
+                post = db.json().get(f"bbs:{i}:{j}")
+                if post == None:
+                    logging.warning(f"{request.remote_addr} tried to delete non-existent post.")
+                    return json.dumps({"error": "Post with designed ID does not exist in this board."}, ensure_ascii=ensure_ascii, separators=(',', ':')), 404, [("Content-Type", "application/json; charset=utf-8")]
+            #for post in board["posts"]:
+                db.delete(f"bbs:{i}:{j}")
+                j += 1
+                while True:
+                    post_2 = db.json().get(f"bbs:{i}:{j}")
+                    if post_2 == None: break
+                    db.renamenx(f"bbs:{i}:{j}", f"bbs:{i}:{j-1}")
+                    db.json().set(f"bbs:{i}:{j-1}", ".id", j-1)
                     j += 1
-                
-                logging.warning(f"{request.remote_addr} tried to delete non-existent post.")
-                return json.dumps({"error": "Post with designed ID does not exist in this board."}, ensure_ascii=ensure_ascii, separators=(',', ':')), 404, [("Content-Type", "application/json; charset=utf-8")]
+                #board["posts"].remove(post)
+
+                logging.info(f"{request.remote_addr} deleted a post ({post['title']}) as {get_user_from_token(post_to_delete['token'])}.")
+                return "", 204, [("Content-Type", "application/json; charset=utf-8")]
             
             i += 1
             
