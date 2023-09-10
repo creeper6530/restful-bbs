@@ -96,6 +96,12 @@ def logout(token: str):
     #for token_pair in token_pair_list:
         if token_pair["token"] == token:
             db.delete(f"tokens:{i}")
+            i += 1
+            while True:
+                token_pair_2 = db.json().get(f"tokens:{i}")
+                if token_pair_2 == None: break
+                db.renamenx(f"tokens:{i}", f"tokens:{i-1}")
+                i += 1
             #token_pair_list.remove(token_pair)
 
             logging.info(f"{request.remote_addr} logged out {token_pair['user']}.")
@@ -148,6 +154,12 @@ def unregister(usr: str, passwd: str):
                 return json.dumps({"error": "User with designed credentials not found."}, ensure_ascii=ensure_ascii, separators=(',', ':')), 401, [("Content-Type", "application/json; charset=utf-8")]
 
             db.delete(f"users:{i}")
+            i += 1
+            while True:
+                user_2 = db.json().get(f"users:{i}")
+                if user_2 == None: break
+                db.renamenx(f"users:{i}", f"users:{i-1}")
+                i += 1
             #users_list.remove(user)
 
             logging.info(f"{request.remote_addr} unregistered {usr}.")
@@ -230,6 +242,7 @@ def logout_all(token: str):
 
     i = 0
     x = 0
+
     while True:
         token_pair = db.json().get(f"tokens:{i}")
         if token_pair == None: break
@@ -237,6 +250,22 @@ def logout_all(token: str):
             db.delete(f"tokens:{i}")
             x += 1
         i += 1
+
+    
+    if x > 0:
+        j = 0
+        free_indexes = []
+
+        while True:
+            if j == i:
+                break
+            token_pair_2 = db.json().get(f"tokens:{j}")
+            if token_pair_2 == None:
+                free_indexes.append(j)
+            elif free_indexes != []:
+                db.renamenx(f"tokens:{j}", f"tokens:{free_indexes[0]}")
+                free_indexes.pop(0)
+            j += 1
     
     logging.info(f"As per request of {request.remote_addr}, logged out all {x} tokens of {user}.")
     return int(x)
@@ -428,6 +457,12 @@ def delete_board():
         #for board in board_list:
             if board["name"] == board_to_delete["name"]:
                 db.delete(f"bbs:{i}")
+                i += 1
+                while True:
+                    board_2 = db.json().get(f"bbs:{i}")
+                    if board_2 == None: break
+                    db.renamenx(f"bbs:{i}", f"bbs:{i-1}")
+                    i += 1
                 #board_list.remove(board)
 
                 logging.info(f"{request.remote_addr} deleted a board ({board_to_delete['name']}) as {get_user_from_token(board_to_delete['token'])}.")
@@ -548,6 +583,13 @@ def delete_post(board_name):
                 #for post in board["posts"]:
                     if post["id"] == post_to_delete["id"]:
                         db.delete(f"bbs:{i}:{j}")
+                        j += 1
+                        while True:
+                            post_2 = db.json().get(f"bbs:{i}:{j}")
+                            if post_2 == None: break
+                            db.renamenx(f"bbs:{i}:{j}", f"bbs:{i}:{j-1}")
+                            db.json().set(f"bbs:{i}:{j-1}", ".id", j-1)
+                            j += 1
                         #board["posts"].remove(post)
 
                         logging.info(f"{request.remote_addr} deleted a post ({post['title']}) as {get_user_from_token(post_to_delete['token'])}.")
