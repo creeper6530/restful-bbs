@@ -198,61 +198,6 @@ Returns a list of posts on a board with title, contents, author and ID of post.
 
 <hr>
 
-# DB control
-
-## Reload DBs from files
-### Endpoint
-`POST /reload`
-### Parameters
-<table>
-<tr><td><b> Parameter </td><td><b> Description </td></tr>
-<tr><td> body </td>
-<td>
-
-```json
-{
-  "token": "string"
-}
-```
-
-</td>
-</table>
-
-### Responses
-| Status | Response |
-| --- | --- |
-| 204 NO CONTENT | DBs were successfully reloaded. |
-### Example
-`curl -i http://127.0.0.1:5000/reload -X POST -H 'Content-Type: application/json' -d '{"token":"S4mpl3T0k3n"}'`
-
-## Save DBs to files
-### Endpoint
-`POST /save`
-### Parameters
-<table>
-<tr><td><b> Parameter </td><td><b> Description </td></tr>
-<tr><td> body </td>
-<td>
-
-```json
-{
-  "token": "string"
-}
-```
-
-</td>
-</table>
-
-### Responses
-| Status | Response |
-| --- | --- |
-| 204 NO CONTENT | DBs were successfully saved. |
-### Example
-`curl -i http://127.0.0.1:5000/save -X POST -H 'Content-Type: application/json' -d '{"token":"S4mpl3T0k3n"}'`
-
-
-<hr>
-
 # Authorization
 
 ## Login

@@ -20,10 +20,11 @@
 - [x] Optimize Dockerization, because now it is a hot mess
 - [x] Move the BBS savefile from file to Redis
 - [x] Solve loading the whole BBS into RAM - work directly with Redis w/o loading it to RAM
-- [ ] Theoretically, it's possible to encounter problems when deleting board that's not the last board in the DB. <br>
+- [x] Theoretically, it's possible to encounter problems when deleting board that's not the last board in the DB. <br>
 Example: It is possible to arrange the DB into this state: `bbs:0 bbs:1 bbs:3 bbs:4` by deleting `bbs:2`. <br>
 This could cause duplicate boards / users (because the BBS wouldn't acknowledge the presence of `bbs:3` and `bbs:4` because it would get `None` for `bbs:2`). <br>
 Solve it by shifting all keys with index > current working index (shifting `bbs:3` back to `bbs:2` and `bbs:4` to `bbs:3`).
+- [ ] Fetch only necessary fields (see https://developer.redis.com/howtos/redisjson/using-python#fetching-specific-fields-from-a-json-document to learn how)
 - [ ] Learn how to return multiple keys by Redis (remove the `while` loops)
 - [ ] Test more Gunicorn workers
 - [ ] Implement permissions (right now you can `GET` everything w/o login and `POST` or `DELETE` w/ login)
