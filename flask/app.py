@@ -55,7 +55,6 @@ def login(usr: str, passwd: str):
     while True:
         user = db.json().get(f"users:{i}")
         if user == None: break
-    #for user in users_list:
         if user["username"] == usr:
             if not user["enabled"]:
                 logging.warning(f"{request.remote_addr} tried to log into disabled user ({usr}).")
@@ -68,18 +67,15 @@ def login(usr: str, passwd: str):
 
             token_length = 64 # v bitech
             new_token = b64encode(urandom(int(token_length/8))).decode().replace("=", "") # Probability of match: 2**-<token_length>
-            new_valid_until = int(time()) + 1*7*24*60*60 # Convert one week (the validity length) to seconds
+            new_valid_until = int(time()) + 1*(7*24*60*60) # Convert one week (the validity length) to seconds
             
             new_token_pair = {"user": usr, "token": new_token, "valid_until": new_valid_until}
-            #token_pair_list.append(new_token_pair)
             j = 0
             while True:
-                data = db.json().get(f"tokens:{j}")
-                if data != None: 
+                if db.exists(f"tokens:{j}") == 1:
                     j += 1
-                    continue
-                db.json().set(f"tokens:{j}", Path.root_path(), new_token_pair)
-                break
+                else: break
+            db.json().set(f"tokens:{j}", Path.root_path(), new_token_pair)
             
             logging.info(f"{request.remote_addr} logged in as {user['username']}.")
             return new_token.encode()
@@ -93,16 +89,13 @@ def logout(token: str):
     while True:
         token_pair = db.json().get(f"tokens:{i}")
         if token_pair == None: break
-    #for token_pair in token_pair_list:
         if token_pair["token"] == token:
             db.delete(f"tokens:{i}")
             i += 1
             while True:
-                token_pair_2 = db.json().get(f"tokens:{i}")
-                if token_pair_2 == None: break
+                if db.exists(f"tokens:{i}") == 0: break
                 db.renamenx(f"tokens:{i}", f"tokens:{i-1}")
                 i += 1
-            #token_pair_list.remove(token_pair)
 
             logging.info(f"{request.remote_addr} logged out {token_pair['user']}.")
             return True
@@ -115,7 +108,6 @@ def register(usr: str, passwd: str):
     while True:
         user = db.json().get(f"users:{i}")
         if user == None: break
-    #for user in users_list:
         if user["username"] == usr:
             logging.warning(f"{request.remote_addr} tried to register already existing user ({usr}).")
             return json.dumps({"error": "User with designed username already exists."}, ensure_ascii=ensure_ascii, separators=(',', ':')), 409, [("Content-Type", "application/json; charset=utf-8")]
@@ -127,11 +119,9 @@ def register(usr: str, passwd: str):
     hashed_passwd = hashpw(passwd.encode(), salt).decode()
     
     new_user = {"username": usr, "password": hashed_passwd, "enabled": True}
-    #users_list.append(new_user)
     j = 0
     while True:
-        data = db.json().get(f"users:{j}")
-        if data != None: 
+        if db.exists(f"users:{j}") == 1: 
             j += 1
             continue
         db.json().set(f"users:{j}", Path.root_path(), new_user)
@@ -145,7 +135,6 @@ def unregister(usr: str, passwd: str):
     while True:
         user = db.json().get(f"users:{i}")
         if user == None: break
-    #for user in users_list:
         if user["username"] == usr:
             
             logging.info("bcrypt: Checking password...")
@@ -156,11 +145,9 @@ def unregister(usr: str, passwd: str):
             db.delete(f"users:{i}")
             i += 1
             while True:
-                user_2 = db.json().get(f"users:{i}")
-                if user_2 == None: break
+                if db.exists(f"users:{i}") == 0: break
                 db.renamenx(f"users:{i}", f"users:{i-1}")
                 i += 1
-            #users_list.remove(user)
 
             logging.info(f"{request.remote_addr} unregistered {usr}.")
             return True
@@ -174,7 +161,6 @@ def chpasswd(usr: str, old_passwd:str, new_passwd: str):
     while True:
         user = db.json().get(f"users:{i}")
         if user == None: break
-    #for user in users_list:
         if user["username"] == usr:
 
             logging.info("bcrypt: Checking password...")
@@ -186,7 +172,6 @@ def chpasswd(usr: str, old_passwd:str, new_passwd: str):
             salt = gensalt()
 
             db.json().set(f"users:{i}", ".password", hashpw(new_passwd.encode(), salt).decode())
-            #user["password"] = hashpw(new_passwd.encode(), salt).decode()
 
             logging.info(f"{request.remote_addr} changed password for {usr}.")
             return True
@@ -200,7 +185,6 @@ def check_token(token: str):
     while True:
         token_pair = db.json().get(f"tokens:{i}")
         if token_pair == None: break
-    #for token_pair in token_pair_list:
         if token_pair["token"] == token:
             if token_pair["valid_until"] < int(time()):
                 logout(token_pair["token"])
@@ -217,7 +201,6 @@ def get_user_from_token(token: str):
     while True:
         token_pair = db.json().get(f"tokens:{i}")
         if token_pair == None: break
-    #for token_pair in token_pair_list:
         if token_pair["token"] == token:
             return token_pair["user"]
         
@@ -230,15 +213,6 @@ def logout_all(token: str):
         return result
 
     user = get_user_from_token(token)
-
-    ''' tmp_pair_list = token_pair_list.copy() # The copy() function prevents creation of reference to object token_pair_list
-                                           # It is needed in order to prevent the for loop from skipping anything
-    x = 0
-    for token_pair in tmp_pair_list:
-        if token_pair["user"] == user:
-            token_pair_list.remove(token_pair)
-            x += 1
-    del tmp_pair_list # We delete the copy in order to save memory '''
 
     i = 0
     x = 0
@@ -259,8 +233,7 @@ def logout_all(token: str):
         while True:
             if j == i:
                 break
-            token_pair_2 = db.json().get(f"tokens:{j}")
-            if token_pair_2 == None:
+            if db.exists(f"tokens:{j}") == 0:
                 free_indexes.append(j)
             elif free_indexes != []:
                 db.renamenx(f"tokens:{j}", f"tokens:{free_indexes[0]}")
@@ -377,10 +350,6 @@ def list_boards():
         board["posts"] = len(db.keys(f"bbs:{i}:*"))
         board_list.append(board)
         i += 1
-    #postless_board_list = deepcopy(board_list)
-
-    #for board in postless_board_list:
-    #    board["posts"] = len(board["posts"])
 
     return json.dumps(board_list, ensure_ascii=ensure_ascii, separators=(',', ':')), 200, [("Content-Type", "application/json; charset=utf-8")]
 
@@ -411,7 +380,6 @@ def add_board():
         while True:
             board = db.json().get(f"bbs:{i}")
             if board == None: break
-        #for board in board_list:
             if board["name"] == new_board["name"]:
                 logging.warning(f"{request.remote_addr} tried to create an existing board.")
                 return json.dumps({"error": "Board with designed name already exists."}, ensure_ascii=ensure_ascii, separators=(',', ':')), 409, [("Content-Type", "application/json; charset=utf-8")]
@@ -420,13 +388,10 @@ def add_board():
 
         j = 0
         while True:
-            data = db.json().get(f"bbs:{j}")
-            if data == None:
+            if db.exists(f"bbs:{j}") == 0:
                 db.json().set(f"bbs:{j}", Path.root_path(), new_board)
                 break
             j += 1
-        #new_board["posts"] = []
-        #board_list.append(new_board)
 
         logging.info(f"{request.remote_addr} created a board ({new_board['name']}) as {get_user_from_token(used_token)}.")
         return "", 204, [("Content-Type", "application/json; charset=utf-8")]
@@ -454,16 +419,13 @@ def delete_board():
         while True:
             board = db.json().get(f"bbs:{i}")
             if board == None: break
-        #for board in board_list:
             if board["name"] == board_to_delete["name"]:
                 db.delete(f"bbs:{i}")
                 i += 1
                 while True:
-                    board_2 = db.json().get(f"bbs:{i}")
-                    if board_2 == None: break
+                    if db.exists(f"bbs:{i}") == 0: break
                     db.renamenx(f"bbs:{i}", f"bbs:{i-1}")
                     i += 1
-                #board_list.remove(board)
 
                 logging.info(f"{request.remote_addr} deleted a board ({board_to_delete['name']}) as {get_user_from_token(board_to_delete['token'])}.")
                 return "", 204, [("Content-Type", "application/json; charset=utf-8")]
@@ -480,7 +442,6 @@ def posts_on_board(board_name):
     while True:
         board = db.json().get(f"bbs:{i}")
         if board == None: break
-    #for board in board_list:
         if board["name"] == board_name:
             posts = []
             j = 0
@@ -523,7 +484,6 @@ def add_on_board(board_name):
         while True:
             board = db.json().get(f"bbs:{i}")
             if board == None: break
-        #for board in board_list:
             if board["name"] == board_name:
 
                 if new_post["title"]== "": # If the title is empty string
@@ -533,16 +493,13 @@ def add_on_board(board_name):
                     new_post["contents"] = "No contents"
 
                 new_post["id"] = len(db.keys(f"bbs:{i}:*"))
-                #new_post["id"] = len(board["posts"])
 
                 j = 0
                 while True:
-                    data = db.json().get(f"bbs:{i}:{j}")
-                    if data == None:
+                    if db.exists(f"bbs:{i}:{j}") == 0:
                         db.json().set(f"bbs:{i}:{j}", Path.root_path(), new_post)
                         break
                     j += 1
-                #board["posts"].append(new_post)
 
                 logging.info(f"{request.remote_addr} created a post ({new_post['title']}) as {get_user_from_token(used_token)}.")
                 return "", 204, [("Content-Type", "application/json; charset=utf-8")]
@@ -574,26 +531,22 @@ def delete_post(board_name):
         while True:
             board = db.json().get(f"bbs:{i}")
             if board == None: break
-        #for board in board_list:
             if board["name"] == board_name:
                 j = post_to_delete["id"]
 
-                post = db.json().get(f"bbs:{i}:{j}")
-                if post == None:
+                if db.exists(f"bbs:{i}:{j}") == 0:
                     logging.warning(f"{request.remote_addr} tried to delete non-existent post.")
                     return json.dumps({"error": "Post with designed ID does not exist in this board."}, ensure_ascii=ensure_ascii, separators=(',', ':')), 404, [("Content-Type", "application/json; charset=utf-8")]
-            #for post in board["posts"]:
+                title = db.json().get(f'bbs:{i}:{j}', '.title')
                 db.delete(f"bbs:{i}:{j}")
                 j += 1
                 while True:
-                    post_2 = db.json().get(f"bbs:{i}:{j}")
-                    if post_2 == None: break
+                    if db.exists(f"bbs:{i}:{j}") == 0: break
                     db.renamenx(f"bbs:{i}:{j}", f"bbs:{i}:{j-1}")
                     db.json().set(f"bbs:{i}:{j-1}", ".id", j-1)
                     j += 1
-                #board["posts"].remove(post)
 
-                logging.info(f"{request.remote_addr} deleted a post ({post['title']}) as {get_user_from_token(post_to_delete['token'])}.")
+                logging.info(f"{request.remote_addr} deleted a post ({title}) as {get_user_from_token(post_to_delete['token'])}.")
                 return "", 204, [("Content-Type", "application/json; charset=utf-8")]
             
             i += 1

@@ -26,7 +26,7 @@ This could cause duplicate boards / users (because the BBS wouldn't acknowledge 
 Solve it by shifting all keys with index > current working index (shifting `bbs:3` back to `bbs:2` and `bbs:4` to `bbs:3`).
 - [ ] Fetch only necessary fields (see https://developer.redis.com/howtos/redisjson/using-python#fetching-specific-fields-from-a-json-document to learn how)
 - [ ] Learn how to return multiple keys by Redis (remove the `while` loops)
-- [ ] Test more Gunicorn workers
+- [ ] Check for token conflicts when creating one (don't rely on chance)
 - [ ] Implement permissions (right now you can `GET` everything w/o login and `POST` or `DELETE` w/ login)
 - [ ] Write unit tests (check that nothing's broken)
 - [ ] Prettify/Format the code
