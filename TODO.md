@@ -24,7 +24,7 @@
 Example: It is possible to arrange the DB into this state: `bbs:0 bbs:1 bbs:3 bbs:4` by deleting `bbs:2`. <br>
 This could cause duplicate boards / users (because the BBS wouldn't acknowledge the presence of `bbs:3` and `bbs:4` because it would get `None` for `bbs:2`). <br>
 Solve it by shifting all keys with index > current working index (shifting `bbs:3` back to `bbs:2` and `bbs:4` to `bbs:3`).
-- [ ] Write unit tests (check that nothing's broken)
+- [x] Write unit tests (check that nothing's broken)
 - [ ] Fetch only necessary fields (see https://developer.redis.com/howtos/redisjson/using-python#fetching-specific-fields-from-a-json-document to learn how)
 It's better than normal when fetching 1 out of 3 fields, little worse than normal when fetching 2 out of 3 fields and terrible when fetching all 3 fields.
 Fetching just one field returns only its value, but fetching more fields returns a dict of them (e.g. `{'.token': 'S4mp13T0k3n', '.user': 'Administrator'}`).
