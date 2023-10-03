@@ -66,7 +66,11 @@ def login(usr: str, passwd: str):
                 return json.dumps({"error": "User credentials are incorrect."}, ensure_ascii=ensure_ascii, separators=(',', ':')), 401, [("Content-Type", "application/json; charset=utf-8")]
 
             token_length = 64 # v bitech
+
             new_token = b64encode(urandom(int(token_length/8))).decode().replace("=", "") # Probability of match: 2**-<token_length>
+            while check_token(new_token) != ('{"error":"Token not found. Please relogin."}', 498, [('Content-Type', 'application/json; charset=utf-8')]):
+                new_token = b64encode(urandom(int(token_length/8))).decode().replace("=", "") # Probability of match: 2**-<token_length>
+
             new_valid_until = int(time()) + 1*(7*24*60*60) # Convert one week (the validity length) to seconds
             
             new_token_pair = {"user": usr, "token": new_token, "valid_until": new_valid_until}
