@@ -27,6 +27,7 @@ Solve it by shifting all keys with index > current working index (shifting `bbs:
 - [x] Write unit tests (check that nothing's broken)
 You can combine these two (fetch only name when looping through and then fetch all upon hitting the desired index) as well.
 - [x] Check for token conflicts when creating one (don't rely on chance)
+- [ ] Optimize your Redis usage by applying tips from this video: https://youtu.be/WQ61RL1GpEE
 - [ ] Fetch only necessary fields (see https://developer.redis.com/howtos/redisjson/using-python#fetching-specific-fields-from-a-json-document to learn how)
 It's better than normal when fetching 1 out of 3 fields, little worse than normal when fetching 2 out of 3 fields and terrible when fetching all 3 fields.
 Fetching just one field returns only its value, but fetching more fields returns a dict of them (e.g. `{'.token': 'S4mp13T0k3n', '.user': 'Administrator'}`).
